@@ -14,6 +14,10 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 300,
       frameHeight: 300
     });
+    this.load.spritesheet("mushroom", "/assets/mushroom.svg", {
+      frameWidth: 450,
+      frameHeight: 420
+    });
     this.load.spritesheet("fox", "/assets/fox.svg", {
       frameWidth: 300,
       frameHeight: 300
@@ -45,15 +49,6 @@ export class BootScene extends Phaser.Scene {
     graphics.lineStyle(3, 0xffef9f, 1);
     graphics.strokeCircle(12, 12, 10);
     graphics.generateTexture("coin", 24, 24);
-
-    graphics.clear();
-    graphics.fillStyle(0xf94a67, 1);
-    graphics.fillCircle(26, 24, 16);
-    graphics.fillStyle(0xfff6db, 1);
-    graphics.fillRect(10, 18, 32, 8);
-    graphics.fillStyle(0xffd065, 1);
-    graphics.fillRect(22, 24, 8, 24);
-    graphics.generateTexture("mushroom", 52, 52);
 
     graphics.clear();
     graphics.fillStyle(0x3fa75c, 1);

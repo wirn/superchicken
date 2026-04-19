@@ -16,16 +16,23 @@ type EnemySprite = Phaser.Physics.Arcade.Sprite & {
   isStomped?: boolean;
 };
 
+type MushroomSprite = Phaser.Physics.Arcade.Sprite & {
+  resetFrameTimer?: Phaser.Time.TimerEvent;
+};
+
 const GAME_WIDTH = 960;
 const GAME_HEIGHT = 540;
 const WORLD_WIDTH = 7400;
 const RESPAWN_Y_OFFSET = 78;
 const FOX_SCALE = 0.34;
 const FOX_SPAWN_Y_OFFSET = 6;
+const MUSHROOM_SCALE = 0.19;
+const MUSHROOM_BOUNCE_VELOCITY = -760;
 
 export class PlayScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private platforms!: Phaser.Physics.Arcade.StaticGroup;
+  private mushrooms!: Phaser.Physics.Arcade.StaticGroup;
   private coins!: Phaser.Physics.Arcade.Group;
   private enemies!: Phaser.Physics.Arcade.Group;
   private goal!: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
@@ -143,6 +150,7 @@ export class PlayScene extends Phaser.Scene {
 
   private createWorld() {
     this.platforms = this.physics.add.staticGroup();
+    this.mushrooms = this.physics.add.staticGroup();
 
     const widths = [520, 430, 510, 360, 540, 420, 500, 390, 580, 440, 520, 460];
     const heights = [430, 398, 364, 404, 380, 342, 392, 358, 420, 372, 336, 390];
@@ -178,14 +186,11 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private decorateSegment(segment: GroundSegment, index: number) {
-    const mushroomCount = 1 + (index % 2);
+    const mushroomCount = index % 2 === 0 ? 1 : 0;
     const bushCount = 1 + ((index + 1) % 2);
 
     for (let i = 0; i < mushroomCount; i += 1) {
-      this.add
-        .image(segment.x + 90 + i * 120, segment.y - 38, "mushroom")
-        .setScale(1 + (i % 2) * 0.15)
-        .setDepth(1);
+      this.createMushroom(segment.x + 90 + i * 120, segment.y - 6, 1 + (i % 2) * 0.08);
     }
 
     for (let i = 0; i < bushCount; i += 1) {
@@ -250,6 +255,20 @@ export class PlayScene extends Phaser.Scene {
     });
   }
 
+  private createMushroom(x: number, y: number, extraScale = 1) {
+    const mushroom = this.mushrooms.create(x, y, "mushroom", 0) as MushroomSprite;
+    const scale = MUSHROOM_SCALE * extraScale;
+    mushroom.setOrigin(0.5, 1);
+    mushroom.setScale(scale);
+    mushroom.setDepth(2);
+    mushroom.refreshBody();
+
+    const body = mushroom.body as Phaser.Physics.Arcade.StaticBody;
+    body.setSize(150, 56);
+    body.setOffset(150, 338);
+    mushroom.refreshBody();
+  }
+
   private createGroups() {
     this.coins = this.physics.add.group({ allowGravity: false, immovable: true });
     this.enemies = this.physics.add.group();
@@ -277,6 +296,7 @@ export class PlayScene extends Phaser.Scene {
 
   private configureCollisions() {
     this.physics.add.collider(this.player, this.platforms);
+    this.physics.add.overlap(this.player, this.mushrooms, this.handleMushroomBounce, undefined, this);
     this.physics.add.collider(this.enemies, this.platforms, this.onEnemyHitPlatform, undefined, this);
     this.physics.add.overlap(this.player, this.coins, this.collectCoin, undefined, this);
     this.physics.add.overlap(this.player, this.enemies, this.handleEnemyContact, undefined, this);
@@ -375,6 +395,38 @@ export class PlayScene extends Phaser.Scene {
     this.collectedCoins += 1;
     this.score += 1;
     this.pushHud();
+  }
+
+  private handleMushroomBounce(
+    playerObject: unknown,
+    mushroomObject: unknown
+  ) {
+    const player = playerObject as Phaser.Physics.Arcade.Sprite;
+    const mushroom = mushroomObject as MushroomSprite;
+    const playerBody = player.body as Phaser.Physics.Arcade.Body;
+    const mushroomBody = mushroom.body as Phaser.Physics.Arcade.StaticBody;
+
+    const landedOnTop =
+      playerBody.velocity.y > 120 &&
+      playerBody.bottom <= mushroomBody.top + 22 &&
+      Math.abs(player.x - mushroom.x) < 72;
+
+    if (!landedOnTop) {
+      return;
+    }
+
+    playerBody.setVelocityY(MUSHROOM_BOUNCE_VELOCITY);
+    mushroom.setFrame(1);
+    mushroom.refreshBody();
+    mushroom.resetFrameTimer?.remove(false);
+    mushroom.resetFrameTimer = this.time.delayedCall(180, () => {
+      if (!mushroom.active) {
+        return;
+      }
+
+      mushroom.setFrame(0);
+      mushroom.refreshBody();
+    });
   }
 
   private handleEnemyContact(
