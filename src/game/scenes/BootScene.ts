@@ -18,6 +18,10 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 450,
       frameHeight: 420
     });
+    this.load.spritesheet("snowman", "/assets/snowman.svg", {
+      frameWidth: 450,
+      frameHeight: 420
+    });
     this.load.spritesheet("cactus", "/assets/cactus.svg", {
       frameWidth: 600,
       frameHeight: 520
@@ -54,6 +58,15 @@ export class BootScene extends Phaser.Scene {
     graphics.fillStyle(0x8b5734, 1);
     graphics.fillRect(0, 24, 128, 8);
     graphics.generateTexture("ground", 128, 32);
+
+    graphics.clear();
+    graphics.fillStyle(0xbfefff, 1);
+    graphics.fillRoundedRect(0, 0, 128, 32, 8);
+    graphics.fillStyle(0xeefcff, 1);
+    graphics.fillRoundedRect(0, 0, 128, 12, 8);
+    graphics.fillStyle(0x8ed4f5, 1);
+    graphics.fillRect(0, 24, 128, 8);
+    graphics.generateTexture("ground-ice", 128, 32);
 
     graphics.clear();
     graphics.fillStyle(0xffd84a, 1);

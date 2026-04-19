@@ -19,6 +19,7 @@ type EnemySprite = Phaser.Physics.Arcade.Sprite & {
 
 type MushroomSprite = Phaser.Physics.Arcade.Sprite & {
   resetFrameTimer?: Phaser.Time.TimerEvent;
+  isUsed?: boolean;
 };
 
 type CactusSprite = Phaser.Physics.Arcade.Sprite & {
@@ -30,7 +31,6 @@ const GAME_HEIGHT = 540;
 const RESPAWN_Y_OFFSET = 78;
 const FOX_SCALE = 0.34;
 const FOX_SPAWN_Y_OFFSET = 6;
-const MUSHROOM_SCALE = 0.19;
 const MUSHROOM_BOUNCE_VELOCITY = -760;
 const CACTUS_SCALE = 0.15;
 
@@ -206,11 +206,17 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createBackdrop() {
+    const backdrop = this.currentLevel.backdrop;
+
     this.backdropObjects.push(
-      this.add.rectangle(this.currentWorldWidth / 2, GAME_HEIGHT / 2, this.currentWorldWidth, GAME_HEIGHT, 0x9de7ff).setScrollFactor(0)
+      this.add
+        .rectangle(this.currentWorldWidth / 2, GAME_HEIGHT / 2, this.currentWorldWidth, GAME_HEIGHT, backdrop.skyColor)
+        .setScrollFactor(0)
     );
     this.backdropObjects.push(
-      this.add.rectangle(this.currentWorldWidth / 2, GAME_HEIGHT - 48, this.currentWorldWidth, 96, 0xb6ef84).setScrollFactor(0.1)
+      this.add
+        .rectangle(this.currentWorldWidth / 2, GAME_HEIGHT - 48, this.currentWorldWidth, 96, backdrop.horizonColor)
+        .setScrollFactor(0.1)
     );
 
     const hillCount = Math.max(12, Math.ceil(this.currentWorldWidth / 560));
@@ -218,14 +224,21 @@ export class PlayScene extends Phaser.Scene {
       const x = 220 + index * 560;
       const hill = this.add.image(x, 420 - (index % 2) * 40, "hill");
       hill.setScrollFactor(0.35);
-      hill.setTint(index % 2 === 0 ? 0x90d88e : 0x7ecb80);
+      hill.setTint(index % 2 === 0 ? backdrop.hillTintA : backdrop.hillTintB);
       hill.setAlpha(0.95);
       this.backdropObjects.push(hill);
     }
 
     const cloudCount = Math.max(16, Math.ceil(this.currentWorldWidth / 410));
     for (let index = 0; index < cloudCount; index += 1) {
-      const cloud = this.add.ellipse(120 + index * 410, 70 + (index % 3) * 26, 140, 52, 0xffffff, 0.8);
+      const cloud = this.add.ellipse(
+        120 + index * 410,
+        70 + (index % 3) * 26,
+        140,
+        52,
+        backdrop.cloudColor,
+        backdrop.cloudAlpha
+      );
       cloud.setScrollFactor(0.18);
       this.backdropObjects.push(cloud);
     }
@@ -246,7 +259,7 @@ export class PlayScene extends Phaser.Scene {
       };
 
       this.platforms
-        .create(segment.x + segment.width / 2, segment.y, "ground")
+        .create(segment.x + segment.width / 2, segment.y, this.currentLevel.groundTextureKey)
         .setDisplaySize(segment.width, 48)
         .refreshBody();
 
@@ -538,17 +551,19 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createMushroom(x: number, y: number, extraScale = 1) {
-    const mushroom = this.mushrooms.create(x, y, "mushroom", 0) as MushroomSprite;
-    const scale = MUSHROOM_SCALE * extraScale;
+    const bounceSprite = this.currentLevel.bounceSprite;
+    const mushroom = this.mushrooms.create(x, y, bounceSprite.textureKey, 0) as MushroomSprite;
+    const scale = bounceSprite.baseScale * extraScale;
 
+    mushroom.isUsed = false;
     mushroom.setOrigin(0.5, 1);
     mushroom.setScale(scale);
     mushroom.setDepth(2);
     mushroom.refreshBody();
 
     const body = mushroom.body as Phaser.Physics.Arcade.StaticBody;
-    body.setSize(150, 56);
-    body.setOffset(150, 338);
+    body.setSize(bounceSprite.bodySize.width, bounceSprite.bodySize.height);
+    body.setOffset(bounceSprite.bodyOffset.x, bounceSprite.bodyOffset.y);
     mushroom.refreshBody();
   }
 
@@ -607,11 +622,16 @@ export class PlayScene extends Phaser.Scene {
     const mushroom = mushroomObject as MushroomSprite;
     const playerBody = player.body as Phaser.Physics.Arcade.Body;
     const mushroomBody = mushroom.body as Phaser.Physics.Arcade.StaticBody;
+    const bounceSprite = this.currentLevel.bounceSprite;
+
+    if (bounceSprite.singleUse && mushroom.isUsed) {
+      return;
+    }
 
     const landedOnTop =
       playerBody.velocity.y > 120 &&
-      playerBody.bottom <= mushroomBody.top + 22 &&
-      Math.abs(player.x - mushroom.x) < 72;
+      playerBody.bottom <= mushroomBody.top + bounceSprite.topLandingPadding &&
+      Math.abs(player.x - mushroom.x) < bounceSprite.bounceRangeX;
 
     if (!landedOnTop) {
       return;
@@ -621,6 +641,13 @@ export class PlayScene extends Phaser.Scene {
     this.sound.play("jump-sfx", { volume: 0.45 });
     mushroom.setFrame(1);
     mushroom.refreshBody();
+
+    if (bounceSprite.singleUse) {
+      mushroom.isUsed = true;
+      mushroom.resetFrameTimer?.remove(false);
+      return;
+    }
+
     mushroom.resetFrameTimer?.remove(false);
     mushroom.resetFrameTimer = this.time.delayedCall(180, () => {
       if (!mushroom.active) {

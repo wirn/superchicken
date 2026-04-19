@@ -2,6 +2,30 @@ export interface LevelConfig {
   number: number;
   label: string;
   musicKey: string;
+  groundTextureKey: string;
+  bounceSprite: {
+    textureKey: string;
+    baseScale: number;
+    singleUse: boolean;
+    bodySize: {
+      width: number;
+      height: number;
+    };
+    bodyOffset: {
+      x: number;
+      y: number;
+    };
+    topLandingPadding: number;
+    bounceRangeX: number;
+  };
+  backdrop: {
+    skyColor: number;
+    horizonColor: number;
+    hillTintA: number;
+    hillTintB: number;
+    cloudColor: number;
+    cloudAlpha: number;
+  };
   movement: {
     walkSpeed: number;
     runSpeed: number;
@@ -23,6 +47,9 @@ export interface LevelConfig {
 function createLevel(
   number: number,
   musicKey: string,
+  groundTextureKey: string,
+  bounceSprite: LevelConfig["bounceSprite"],
+  backdrop: LevelConfig["backdrop"],
   movement: LevelConfig["movement"],
   segmentWidths: number[],
   segmentHeights: number[],
@@ -34,6 +61,9 @@ function createLevel(
     number,
     label: `Level ${number}`,
     musicKey,
+    groundTextureKey,
+    bounceSprite,
+    backdrop,
     movement,
     segmentWidths,
     segmentHeights,
@@ -51,6 +81,30 @@ export const LEVELS: LevelConfig[] = [
   createLevel(
     1,
     "bgm-level-1",
+    "ground",
+    {
+      textureKey: "mushroom",
+      baseScale: 0.19,
+      singleUse: false,
+      bodySize: {
+        width: 150,
+        height: 56
+      },
+      bodyOffset: {
+        x: 150,
+        y: 338
+      },
+      topLandingPadding: 22,
+      bounceRangeX: 72
+    },
+    {
+      skyColor: 0x9de7ff,
+      horizonColor: 0xb6ef84,
+      hillTintA: 0x90d88e,
+      hillTintB: 0x7ecb80,
+      cloudColor: 0xffffff,
+      cloudAlpha: 0.8
+    },
     {
       walkSpeed: 240,
       runSpeed: 340,
@@ -67,6 +121,30 @@ export const LEVELS: LevelConfig[] = [
   createLevel(
     2,
     "bgm-level-2",
+    "ground-ice",
+    {
+      textureKey: "snowman",
+      baseScale: 0.19,
+      singleUse: true,
+      bodySize: {
+        width: 186,
+        height: 58
+      },
+      bodyOffset: {
+        x: 132,
+        y: 300
+      },
+      topLandingPadding: 20,
+      bounceRangeX: 76
+    },
+    {
+      skyColor: 0x081a33,
+      horizonColor: 0x102847,
+      hillTintA: 0x2b5d7f,
+      hillTintB: 0x214968,
+      cloudColor: 0xc9e9ff,
+      cloudAlpha: 0.22
+    },
     {
       walkSpeed: 235,
       runSpeed: 325,

@@ -1,15 +1,41 @@
+$background-sky-top: #82d7ff;
+$background-sky-bottom: #d6f6ff;
+$background-body-glow: rgba(255, 255, 255, 0.85);
+$background-game-top: #9de6ff;
+$background-game-bottom: #dbf9ff;
+
+$text-primary: #213447;
+$text-muted: #356981;
+$text-on-accent: #ffffff;
+
+$surface-panel: rgba(255, 255, 255, 0.88);
+$surface-hud: rgba(255, 255, 255, 0.88);
+$surface-border-subtle: rgba(45, 100, 46, 0.18);
+$surface-input-border: rgba(36, 74, 92, 0.18);
+
+$button-primary-top: #ffb347;
+$button-primary-bottom: #ff9d2e;
+$button-secondary-top: #6bc17c;
+$button-secondary-bottom: #459f58;
+
+$effect-shadow-panel: 0 20px 45px rgba(18, 76, 109, 0.18);
+$effect-shadow-hud: 0 14px 34px rgba(27, 88, 123, 0.15);
+$effect-shadow-button: 0 10px 25px rgba(214, 110, 0, 0.28);
+$effect-shadow-button-hover: 0 14px 28px rgba(214, 110, 0, 0.34);
+$effect-shadow-button-secondary: 0 10px 25px rgba(57, 133, 72, 0.25);
+
 :root {
   color-scheme: light;
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  --sky-top: #82d7ff;
-  --sky-bottom: #d6f6ff;
+  --sky-top: #{$background-sky-top};
+  --sky-bottom: #{$background-sky-bottom};
   --grass: #67bf52;
   --grass-dark: #2d7f2f;
-  --panel: rgba(255, 255, 255, 0.88);
-  --panel-border: rgba(45, 100, 46, 0.18);
-  --ink: #213447;
-  --accent: #ff9d2e;
-  --shadow: 0 20px 45px rgba(18, 76, 109, 0.18);
+  --panel: #{$surface-panel};
+  --panel-border: #{$surface-border-subtle};
+  --ink: #{$text-primary};
+  --accent: #{$button-primary-bottom};
+  --shadow: #{$effect-shadow-panel};
 }
 
 * {
@@ -22,11 +48,7 @@ body {
   color: var(--ink);
   overflow: hidden;
   background:
-    radial-gradient(
-      circle at top left,
-      rgba(255, 255, 255, 0.85),
-      transparent 30%
-    ),
+    radial-gradient(circle at top left, $background-body-glow, transparent 30%),
     linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
 }
 
@@ -57,7 +79,7 @@ input {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-size: 0.78rem;
-  color: #356981;
+  color: $text-muted;
 }
 
 h1,
@@ -96,7 +118,7 @@ h2 {
   border-radius: 0;
   border: 0;
   box-shadow: none;
-  background: linear-gradient(180deg, #9de6ff, #dbf9ff);
+  background: linear-gradient(180deg, $background-game-top, $background-game-bottom);
 }
 
 .overlay {
@@ -159,20 +181,20 @@ h2 {
 .hud__pill {
   padding: 0.65rem 1rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 14px 34px rgba(27, 88, 123, 0.15);
+  background: $surface-hud;
+  box-shadow: $effect-shadow-hud;
   font-weight: 700;
 }
 
 .action-button {
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(180deg, #ffb347, #ff9d2e);
-  color: white;
+  background: linear-gradient(180deg, $button-primary-top, $button-primary-bottom);
+  color: $text-on-accent;
   padding: 0.9rem 1.25rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 10px 25px rgba(214, 110, 0, 0.28);
+  box-shadow: $effect-shadow-button;
   transition:
     transform 140ms ease,
     box-shadow 140ms ease;
@@ -180,12 +202,12 @@ h2 {
 
 .action-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(214, 110, 0, 0.34);
+  box-shadow: $effect-shadow-button-hover;
 }
 
 .action-button--secondary {
-  background: linear-gradient(180deg, #6bc17c, #459f58);
-  box-shadow: 0 10px 25px rgba(57, 133, 72, 0.25);
+  background: linear-gradient(180deg, $button-secondary-top, $button-secondary-bottom);
+  box-shadow: $effect-shadow-button-secondary;
 }
 
 .button-row {
@@ -201,7 +223,7 @@ h2 {
 }
 
 .input-row input {
-  border: 1px solid rgba(36, 74, 92, 0.18);
+  border: 1px solid $surface-input-border;
   border-radius: 14px;
   padding: 0.85rem 1rem;
 }
