@@ -167,12 +167,12 @@ export class PlayScene extends Phaser.Scene {
 
   private createGoal() {
     const finalSegment = this.segments[this.segments.length - 1];
-    const goalX = finalSegment.x + finalSegment.width - 86;
-    const goalY = finalSegment.y - 24;
+    const goalX = finalSegment.x + finalSegment.width - 112;
+    const goalY = finalSegment.y + 40;
 
     this.goal = this.physics.add.staticImage(goalX, goalY, "castle");
     this.goal.setOrigin(0.5, 1);
-    this.goal.setDisplaySize(150, 150);
+    this.goal.setDisplaySize(250, 250);
     this.goal.setDepth(2);
     this.goal.refreshBody();
   }
