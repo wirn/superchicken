@@ -1,7 +1,9 @@
 import "../styles/main.scss";
+import "../styles/level-2.scss";
 import type Phaser from "phaser";
 import { createGame } from "./game/createGame";
 import { loadHighscores, saveHighscore } from "./game/highscores";
+import { isValidLevelNumber } from "./game/levels";
 import type { GameResult, HighscoreEntry } from "./game/types";
 
 const startButton = document.querySelector<HTMLButtonElement>("#start-button");
@@ -11,6 +13,7 @@ const menuOverlay = document.querySelector<HTMLElement>("#menu-overlay");
 const gameOverOverlay = document.querySelector<HTMLElement>("#game-over-overlay");
 const highscoreLists = document.querySelectorAll<HTMLOListElement>(".highscore-list");
 const hud = document.querySelector<HTMLElement>("#hud");
+const hudLevel = document.querySelector<HTMLElement>("#hud-level");
 const hudLives = document.querySelector<HTMLElement>("#hud-lives");
 const hudScore = document.querySelector<HTMLElement>("#hud-score");
 const nameInput = document.querySelector<HTMLInputElement>("#player-name");
@@ -20,6 +23,24 @@ const gameOverSummary = document.querySelector<HTMLElement>("#game-over-summary"
 let game: Phaser.Game | null = null;
 let lastResult: GameResult | null = null;
 let hasSavedCurrentScore = false;
+
+function getDebugStartLevel() {
+  if (!import.meta.env.DEV) {
+    return 1;
+  }
+
+  const levelParam = new URLSearchParams(window.location.search).get("level");
+  if (!levelParam) {
+    return 1;
+  }
+
+  const parsedLevel = Number(levelParam);
+  return isValidLevelNumber(parsedLevel) ? parsedLevel : 1;
+}
+
+function syncLevelClass(level: number) {
+  document.body.classList.toggle("level-2", level === 2);
+}
 
 function renderHighscores(scores: HighscoreEntry[]) {
   if (highscoreLists.length === 0) {
@@ -37,7 +58,13 @@ function renderHighscores(scores: HighscoreEntry[]) {
   });
 }
 
-function setHud(lives: number, score: number) {
+function setHud(level: number, levelLabel: string, lives: number, score: number) {
+  syncLevelClass(level);
+
+  if (hudLevel) {
+    hudLevel.textContent = levelLabel;
+  }
+
   if (hudLives) {
     hudLives.textContent = String(lives);
   }
@@ -48,6 +75,7 @@ function setHud(lives: number, score: number) {
 }
 
 function openMenu() {
+  syncLevelClass(0);
   menuOverlay?.classList.add("overlay--visible");
   gameOverOverlay?.classList.remove("is-open");
   hud?.classList.add("hud--hidden");
@@ -56,6 +84,7 @@ function openMenu() {
 function openGameOver(result: GameResult) {
   lastResult = result;
   hasSavedCurrentScore = false;
+  syncLevelClass(0);
   if (gameOverTitle) {
     gameOverTitle.textContent = result.completed ? "Game Complete" : "Game Over";
   }
@@ -89,15 +118,18 @@ function destroyRunningGame() {
 function startGame() {
   destroyRunningGame();
   closeOverlaysForGame();
-  setHud(3, 0);
+  const startLevel = getDebugStartLevel();
+  setHud(startLevel, `Level ${startLevel}`, 3, 0);
 
   game = createGame("game-container", {
     onHudChange(snapshot) {
-      setHud(snapshot.lives, snapshot.score);
+      setHud(snapshot.level, snapshot.levelLabel, snapshot.lives, snapshot.score);
     },
     onGameOver(result) {
       openGameOver(result);
     }
+  }, {
+    startLevel
   });
 }
 

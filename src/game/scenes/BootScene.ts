@@ -30,7 +30,8 @@ export class BootScene extends Phaser.Scene {
     this.load.audio("complete-sfx", "/assets/sound/complete.mp3");
     this.load.audio("damage-sfx", "/assets/sound/damage.mp3");
     this.load.audio("death-sfx", "/assets/sound/death.mp3");
-    this.load.audio("bgm", "/assets/sound/background1.mp3");
+    this.load.audio("bgm-level-1", "/assets/sound/background1.mp3");
+    this.load.audio("bgm-level-2", "/assets/sound/background2.mp3");
     this.load.audio("jump-sfx", "/assets/sound/jump.mp3");
     this.load.audio("stomp-sfx", "/assets/sound/stomp.mp3");
     this.load.svg("castle", "/assets/castle.svg", {

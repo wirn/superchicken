@@ -7,6 +7,8 @@ export interface HighscoreEntry {
 export interface HudSnapshot {
   lives: number;
   score: number;
+  level: number;
+  levelLabel: string;
 }
 
 export interface GameResult {

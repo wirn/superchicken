@@ -1,9 +1,11 @@
 import Phaser from "phaser";
 import type { GameBridge } from "./types";
+import { getLevelIndex, isValidLevelNumber } from "./levels";
 import { BootScene } from "./scenes/BootScene";
 import { PlayScene } from "./scenes/PlayScene";
 
 let runtimeBridge: GameBridge | null = null;
+let runtimeStartLevelIndex = 0;
 
 export function getRuntimeBridge() {
   if (!runtimeBridge) {
@@ -13,8 +15,13 @@ export function getRuntimeBridge() {
   return runtimeBridge;
 }
 
-export function createGame(containerId: string, bridge: GameBridge) {
+export function getRuntimeStartLevelIndex() {
+  return runtimeStartLevelIndex;
+}
+
+export function createGame(containerId: string, bridge: GameBridge, options?: { startLevel?: number }) {
   runtimeBridge = bridge;
+  runtimeStartLevelIndex = isValidLevelNumber(options?.startLevel ?? 1) ? getLevelIndex(options?.startLevel ?? 1) : 0;
 
   return new Phaser.Game({
     type: Phaser.AUTO,

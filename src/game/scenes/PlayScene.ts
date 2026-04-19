@@ -1,5 +1,6 @@
 import Phaser from "phaser";
-import { getRuntimeBridge } from "../createGame";
+import { getRuntimeBridge, getRuntimeStartLevelIndex } from "../createGame";
+import { getLevelWorldWidth, LEVELS, type LevelConfig } from "../levels";
 import type { GameResult } from "../types";
 
 type GroundSegment = {
@@ -26,27 +27,25 @@ type CactusSprite = Phaser.Physics.Arcade.Sprite & {
 
 const GAME_WIDTH = 960;
 const GAME_HEIGHT = 540;
-const WORLD_WIDTH = 7400;
 const RESPAWN_Y_OFFSET = 78;
 const FOX_SCALE = 0.34;
 const FOX_SPAWN_Y_OFFSET = 6;
 const MUSHROOM_SCALE = 0.19;
 const MUSHROOM_BOUNCE_VELOCITY = -760;
 const CACTUS_SCALE = 0.15;
-const WALK_SPEED = 240;
-const RUN_SPEED = 340;
 
 export class PlayScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private platforms!: Phaser.Physics.Arcade.StaticGroup;
   private mushrooms!: Phaser.Physics.Arcade.StaticGroup;
   private cactuses!: Phaser.Physics.Arcade.StaticGroup;
+  private goals!: Phaser.Physics.Arcade.StaticGroup;
   private coins!: Phaser.Physics.Arcade.Group;
   private enemies!: Phaser.Physics.Arcade.Group;
-  private goal!: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private bridge = getRuntimeBridge();
   private segments: GroundSegment[] = [];
+  private backdropObjects: Phaser.GameObjects.GameObject[] = [];
   private checkpointX = 110;
   private checkpointY = 380;
   private invulnerableUntil = 0;
@@ -63,7 +62,14 @@ export class PlayScene extends Phaser.Scene {
   private eagleTimer?: Phaser.Time.TimerEvent;
   private difficultyTimer?: Phaser.Time.TimerEvent;
   private backgroundMusic?: Phaser.Sound.BaseSound;
+  private currentMusicKey?: string;
+  private levelBanner?: Phaser.GameObjects.Text;
   private gameEnded = false;
+  private isTransitioning = false;
+  private readonly levels = LEVELS;
+  private currentLevelIndex = getRuntimeStartLevelIndex();
+  private currentLevel: LevelConfig = this.levels[this.currentLevelIndex];
+  private currentWorldWidth = getLevelWorldWidth(this.levels[this.currentLevelIndex]);
 
   constructor() {
     super("play");
@@ -71,32 +77,28 @@ export class PlayScene extends Phaser.Scene {
 
   create() {
     this.startedAt = this.time.now;
-    this.physics.world.setBounds(0, 0, WORLD_WIDTH, GAME_HEIGHT + 220);
-    this.cameras.main.setBounds(0, 0, WORLD_WIDTH, GAME_HEIGHT);
 
-    this.createBackdrop();
-    this.createWorld();
+    this.createGroups();
     this.createPlayer();
+    this.createChickenAnimations();
     this.createFoxAnimations();
     this.createEagleAnimations();
-    this.createGroups();
-    this.populateWorld();
     this.configureCollisions();
     this.configureInput();
-    this.configureTimers();
-    this.startBackgroundMusic();
-    this.pushHud();
+    this.loadLevel(this.currentLevelIndex, true);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.stopBackgroundMusic();
+      this.clearLevelTimers();
     });
     this.events.once(Phaser.Scenes.Events.DESTROY, () => {
       this.stopBackgroundMusic();
+      this.clearLevelTimers();
     });
   }
 
   update() {
-    if (this.gameEnded) {
+    if (this.gameEnded || this.isTransitioning) {
       return;
     }
 
@@ -110,16 +112,17 @@ export class PlayScene extends Phaser.Scene {
       Phaser.Input.Keyboard.JustDown(this.keys.up) ||
       Phaser.Input.Keyboard.JustDown(this.keys.jumpAlt);
     const fastFall = this.keys.down.isDown && !body.blocked.down;
-    const moveSpeed = isSprinting ? RUN_SPEED : WALK_SPEED;
+    const moveConfig = this.currentLevel.movement;
+    const targetSpeed = isMoving ? (moveLeft ? -1 : 1) * (isSprinting ? moveConfig.runSpeed : moveConfig.walkSpeed) : 0;
+    const acceleration = body.blocked.down ? moveConfig.groundAcceleration : moveConfig.airAcceleration;
+    const deceleration = moveConfig.groundDeceleration;
+
+    body.setVelocityX(this.getNextHorizontalVelocity(body.velocity.x, targetSpeed, isMoving ? acceleration : deceleration));
 
     if (moveLeft && !moveRight) {
-      body.setVelocityX(-moveSpeed);
       this.player.setFlipX(true);
     } else if (moveRight && !moveLeft) {
-      body.setVelocityX(moveSpeed);
       this.player.setFlipX(false);
-    } else {
-      body.setVelocityX(0);
     }
 
     if (wantsJump && body.blocked.down) {
@@ -153,44 +156,102 @@ export class PlayScene extends Phaser.Scene {
     this.updateCamera();
   }
 
-  private createBackdrop() {
-    this.add.rectangle(WORLD_WIDTH / 2, GAME_HEIGHT / 2, WORLD_WIDTH, GAME_HEIGHT, 0x9de7ff).setScrollFactor(0);
-    this.add.rectangle(WORLD_WIDTH / 2, GAME_HEIGHT - 48, WORLD_WIDTH, 96, 0xb6ef84).setScrollFactor(0.1);
+  private loadLevel(levelIndex: number, isInitialLoad = false) {
+    this.currentLevelIndex = levelIndex;
+    this.currentLevel = this.levels[levelIndex];
+    this.currentWorldWidth = getLevelWorldWidth(this.currentLevel);
 
-    for (let index = 0; index < 12; index += 1) {
+    this.resetLevelState();
+    this.clearLevelObjects();
+    this.syncBackgroundMusic();
+    this.createBackdrop();
+    this.createWorld();
+    this.populateWorld();
+    this.resetPlayerForLevelStart(isInitialLoad);
+    this.configureTimers();
+    this.pushHud();
+    this.showLevelBanner(this.currentLevel.label);
+  }
+
+  private getNextHorizontalVelocity(currentVelocity: number, targetVelocity: number, deltaPerSecond: number) {
+    const step = deltaPerSecond * (this.game.loop.delta / 1000);
+    const difference = targetVelocity - currentVelocity;
+
+    if (Math.abs(difference) <= step) {
+      return targetVelocity;
+    }
+
+    return currentVelocity + Math.sign(difference) * step;
+  }
+
+  private resetLevelState() {
+    this.segments = [];
+    this.maxCameraScrollX = 0;
+    this.difficultyLevel = 0;
+    this.foxSpawnDelay = this.currentLevel.foxSpawnDelay;
+    this.eagleSpawnDelay = this.currentLevel.eagleSpawnDelay;
+    this.invulnerableUntil = 0;
+  }
+
+  private clearLevelObjects() {
+    this.clearLevelTimers();
+    this.platforms.clear(true, true);
+    this.mushrooms.clear(true, true);
+    this.cactuses.clear(true, true);
+    this.goals.clear(true, true);
+    this.coins.clear(true, true);
+    this.enemies.clear(true, true);
+    this.backdropObjects.forEach((object) => object.destroy());
+    this.backdropObjects = [];
+  }
+
+  private createBackdrop() {
+    this.backdropObjects.push(
+      this.add.rectangle(this.currentWorldWidth / 2, GAME_HEIGHT / 2, this.currentWorldWidth, GAME_HEIGHT, 0x9de7ff).setScrollFactor(0)
+    );
+    this.backdropObjects.push(
+      this.add.rectangle(this.currentWorldWidth / 2, GAME_HEIGHT - 48, this.currentWorldWidth, 96, 0xb6ef84).setScrollFactor(0.1)
+    );
+
+    const hillCount = Math.max(12, Math.ceil(this.currentWorldWidth / 560));
+    for (let index = 0; index < hillCount; index += 1) {
       const x = 220 + index * 560;
       const hill = this.add.image(x, 420 - (index % 2) * 40, "hill");
       hill.setScrollFactor(0.35);
       hill.setTint(index % 2 === 0 ? 0x90d88e : 0x7ecb80);
       hill.setAlpha(0.95);
+      this.backdropObjects.push(hill);
     }
 
-    for (let index = 0; index < 16; index += 1) {
+    const cloudCount = Math.max(16, Math.ceil(this.currentWorldWidth / 410));
+    for (let index = 0; index < cloudCount; index += 1) {
       const cloud = this.add.ellipse(120 + index * 410, 70 + (index % 3) * 26, 140, 52, 0xffffff, 0.8);
       cloud.setScrollFactor(0.18);
+      this.backdropObjects.push(cloud);
     }
   }
 
   private createWorld() {
-    this.platforms = this.physics.add.staticGroup();
-    this.mushrooms = this.physics.add.staticGroup();
-    this.cactuses = this.physics.add.staticGroup();
-
-    const widths = [520, 430, 510, 360, 540, 420, 500, 390, 580, 440, 520, 460];
-    const heights = [430, 398, 364, 404, 380, 342, 392, 358, 420, 372, 336, 390];
-    const gaps = [0, 120, 145, 130, 180, 135, 165, 120, 170, 135, 190, 0];
+    this.physics.world.setBounds(0, 0, this.currentWorldWidth, GAME_HEIGHT + 220);
+    this.cameras.main.setBounds(0, 0, this.currentWorldWidth, GAME_HEIGHT);
 
     let cursorX = 0;
-    widths.forEach((width, index) => {
-      cursorX += gaps[index];
-      const y = heights[index];
+    this.currentLevel.segmentWidths.forEach((width, index) => {
+      cursorX += this.currentLevel.segmentGaps[index];
+
+      const segment: GroundSegment = {
+        x: cursorX,
+        width,
+        y: this.currentLevel.segmentHeights[index]
+      };
+
       this.platforms
-        .create(cursorX + width / 2, y, "ground")
-        .setDisplaySize(width, 48)
+        .create(segment.x + segment.width / 2, segment.y, "ground")
+        .setDisplaySize(segment.width, 48)
         .refreshBody();
 
-      this.segments.push({ x: cursorX, width, y });
-      this.decorateSegment(this.segments[this.segments.length - 1], index);
+      this.segments.push(segment);
+      this.decorateSegment(segment, index);
       cursorX += width;
     });
 
@@ -201,12 +262,13 @@ export class PlayScene extends Phaser.Scene {
     const finalSegment = this.segments[this.segments.length - 1];
     const goalX = finalSegment.x + finalSegment.width - 112;
     const goalY = finalSegment.y + 40;
+    const goal = this.physics.add.staticImage(goalX, goalY, "castle");
 
-    this.goal = this.physics.add.staticImage(goalX, goalY, "castle");
-    this.goal.setOrigin(0.5, 1);
-    this.goal.setDisplaySize(250, 250);
-    this.goal.setDepth(2);
-    this.goal.refreshBody();
+    goal.setOrigin(0.5, 1);
+    goal.setDisplaySize(250, 250);
+    goal.setDepth(2);
+    goal.refreshBody();
+    this.goals.add(goal);
   }
 
   private decorateSegment(segment: GroundSegment, index: number) {
@@ -223,15 +285,16 @@ export class PlayScene extends Phaser.Scene {
     }
 
     for (let i = 0; i < bushCount; i += 1) {
-      this.add
-        .image(segment.x + segment.width - 90 - i * 68, segment.y - 18, "bush")
-        .setScale(1 + i * 0.08)
-        .setDepth(1);
+      this.backdropObjects.push(
+        this.add
+          .image(segment.x + segment.width - 90 - i * 68, segment.y - 18, "bush")
+          .setScale(1 + i * 0.08)
+          .setDepth(1)
+      );
     }
   }
 
   private createPlayer() {
-    this.createChickenAnimations();
     this.player = this.physics.add.sprite(110, 330, "chicken");
     this.player.setScale(0.42);
     this.player.setFrame(1);
@@ -242,6 +305,29 @@ export class PlayScene extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setSize(112, 126);
     body.setOffset(42, 42);
+  }
+
+  private resetPlayerForLevelStart(isInitialLoad: boolean) {
+    const firstSegment = this.segments[0];
+    const startX = Math.max(110, firstSegment.x + 60);
+    const startY = firstSegment.y - RESPAWN_Y_OFFSET;
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+
+    this.checkpointX = startX;
+    this.checkpointY = firstSegment.y;
+    this.player.clearTint();
+    this.player.setAlpha(1);
+    this.player.setFlipX(false);
+    this.player.setPosition(startX, startY);
+    this.player.setVelocity(0, 0);
+    this.player.setFrame(1);
+    body.setVelocity(0, 0);
+    this.cameras.main.scrollX = 0;
+    this.physics.resume();
+
+    if (!isInitialLoad) {
+      this.invulnerableUntil = this.time.now + 900;
+    }
   }
 
   private createChickenAnimations() {
@@ -284,51 +370,23 @@ export class PlayScene extends Phaser.Scene {
     });
   }
 
-  private startBackgroundMusic() {
-    this.stopBackgroundMusic();
-    this.backgroundMusic = this.sound.add("bgm", {
-      loop: true,
-      volume: 0.32
-    });
-    this.backgroundMusic.play();
-  }
-
-  private stopBackgroundMusic() {
-    this.backgroundMusic?.stop();
-    this.backgroundMusic?.destroy();
-    this.backgroundMusic = undefined;
-  }
-
-  private createMushroom(x: number, y: number, extraScale = 1) {
-    const mushroom = this.mushrooms.create(x, y, "mushroom", 0) as MushroomSprite;
-    const scale = MUSHROOM_SCALE * extraScale;
-    mushroom.setOrigin(0.5, 1);
-    mushroom.setScale(scale);
-    mushroom.setDepth(2);
-    mushroom.refreshBody();
-
-    const body = mushroom.body as Phaser.Physics.Arcade.StaticBody;
-    body.setSize(150, 56);
-    body.setOffset(150, 338);
-    mushroom.refreshBody();
-  }
-
-  private createCactus(x: number, y: number) {
-    const cactus = this.cactuses.create(x, y, "cactus", 0) as CactusSprite;
-    cactus.setOrigin(0.5, 1);
-    cactus.setScale(CACTUS_SCALE);
-    cactus.setDepth(2);
-    cactus.refreshBody();
-
-    const body = cactus.body as Phaser.Physics.Arcade.StaticBody;
-    body.setSize(220, 250);
-    body.setOffset(190, 185);
-    cactus.refreshBody();
-  }
-
   private createGroups() {
+    this.platforms = this.physics.add.staticGroup();
+    this.mushrooms = this.physics.add.staticGroup();
+    this.cactuses = this.physics.add.staticGroup();
+    this.goals = this.physics.add.staticGroup();
     this.coins = this.physics.add.group({ allowGravity: false, immovable: true });
     this.enemies = this.physics.add.group();
+  }
+
+  private configureCollisions() {
+    this.physics.add.collider(this.player, this.platforms);
+    this.physics.add.overlap(this.player, this.mushrooms, this.handleMushroomBounce, undefined, this);
+    this.physics.add.overlap(this.player, this.cactuses, this.handleCactusContact, undefined, this);
+    this.physics.add.collider(this.enemies, this.platforms, this.onEnemyHitPlatform, undefined, this);
+    this.physics.add.overlap(this.player, this.coins, this.collectCoin, undefined, this);
+    this.physics.add.overlap(this.player, this.enemies, this.handleEnemyContact, undefined, this);
+    this.physics.add.overlap(this.player, this.goals, this.completeLevel, undefined, this);
   }
 
   private populateWorld() {
@@ -345,20 +403,10 @@ export class PlayScene extends Phaser.Scene {
         coin.setDepth(3);
       }
 
-      if (index > 1 && index < 6) {
+      if (index >= this.currentLevel.initialFoxRange.startIndex && index <= this.currentLevel.initialFoxRange.endIndex) {
         this.spawnFox(segment.x + segment.width * 0.55, segment.y - FOX_SPAWN_Y_OFFSET, 70 + index * 8);
       }
     });
-  }
-
-  private configureCollisions() {
-    this.physics.add.collider(this.player, this.platforms);
-    this.physics.add.overlap(this.player, this.mushrooms, this.handleMushroomBounce, undefined, this);
-    this.physics.add.overlap(this.player, this.cactuses, this.handleCactusContact, undefined, this);
-    this.physics.add.collider(this.enemies, this.platforms, this.onEnemyHitPlatform, undefined, this);
-    this.physics.add.overlap(this.player, this.coins, this.collectCoin, undefined, this);
-    this.physics.add.overlap(this.player, this.enemies, this.handleEnemyContact, undefined, this);
-    this.physics.add.overlap(this.player, this.goal, this.completeLevel, undefined, this);
   }
 
   private configureInput() {
@@ -389,13 +437,25 @@ export class PlayScene extends Phaser.Scene {
     });
   }
 
+  private clearLevelTimers() {
+    this.foxTimer?.remove(false);
+    this.eagleTimer?.remove(false);
+    this.difficultyTimer?.remove(false);
+    this.foxTimer = undefined;
+    this.eagleTimer = undefined;
+    this.difficultyTimer = undefined;
+  }
+
   private scheduleFoxSpawns() {
     this.foxTimer?.remove(false);
     this.foxTimer = this.time.addEvent({
       delay: this.foxSpawnDelay,
       loop: true,
       callback: () => {
-        const futureX = Math.min(WORLD_WIDTH - 120, this.cameras.main.scrollX + GAME_WIDTH + Phaser.Math.Between(180, 420));
+        const futureX = Math.min(
+          this.currentWorldWidth - 120,
+          this.cameras.main.scrollX + GAME_WIDTH + Phaser.Math.Between(180, 420)
+        );
         const segment = this.findSegmentAtX(futureX);
 
         if (!segment) {
@@ -413,9 +473,10 @@ export class PlayScene extends Phaser.Scene {
       delay: this.eagleSpawnDelay,
       loop: true,
       callback: () => {
-        const x = Math.min(WORLD_WIDTH - 80, this.cameras.main.scrollX + GAME_WIDTH + Phaser.Math.Between(60, 260));
+        const x = Math.min(this.currentWorldWidth - 80, this.cameras.main.scrollX + GAME_WIDTH + Phaser.Math.Between(60, 260));
         const eagle = this.enemies.create(x, -30, "eagle") as EnemySprite;
         const eagleBody = eagle.body as Phaser.Physics.Arcade.Body;
+
         eagle.enemyKind = "eagle";
         eagle.patrolSpeed = 150 + this.difficultyLevel * 18;
         eagle.setScale(0.34);
@@ -429,9 +490,86 @@ export class PlayScene extends Phaser.Scene {
     });
   }
 
+  private syncBackgroundMusic() {
+    if (this.currentMusicKey === this.currentLevel.musicKey && this.backgroundMusic?.isPlaying) {
+      return;
+    }
+
+    this.stopBackgroundMusic();
+    this.currentMusicKey = this.currentLevel.musicKey;
+    this.backgroundMusic = this.sound.add(this.currentLevel.musicKey, {
+      loop: true,
+      volume: 0.32
+    });
+    this.backgroundMusic.play();
+  }
+
+  private stopBackgroundMusic() {
+    this.backgroundMusic?.stop();
+    this.backgroundMusic?.destroy();
+    this.backgroundMusic = undefined;
+    this.currentMusicKey = undefined;
+  }
+
+  private showLevelBanner(label: string) {
+    this.levelBanner?.destroy();
+    this.levelBanner = this.add
+      .text(GAME_WIDTH / 2, 82, label, {
+        fontFamily: "Trebuchet MS",
+        fontSize: "30px",
+        color: "#213447",
+        backgroundColor: "rgba(255,255,255,0.78)",
+        padding: { x: 18, y: 10 }
+      })
+      .setOrigin(0.5)
+      .setDepth(20)
+      .setScrollFactor(0);
+
+    this.tweens.add({
+      targets: this.levelBanner,
+      alpha: 0,
+      delay: 1200,
+      duration: 350,
+      onComplete: () => {
+        this.levelBanner?.destroy();
+        this.levelBanner = undefined;
+      }
+    });
+  }
+
+  private createMushroom(x: number, y: number, extraScale = 1) {
+    const mushroom = this.mushrooms.create(x, y, "mushroom", 0) as MushroomSprite;
+    const scale = MUSHROOM_SCALE * extraScale;
+
+    mushroom.setOrigin(0.5, 1);
+    mushroom.setScale(scale);
+    mushroom.setDepth(2);
+    mushroom.refreshBody();
+
+    const body = mushroom.body as Phaser.Physics.Arcade.StaticBody;
+    body.setSize(150, 56);
+    body.setOffset(150, 338);
+    mushroom.refreshBody();
+  }
+
+  private createCactus(x: number, y: number) {
+    const cactus = this.cactuses.create(x, y, "cactus", 0) as CactusSprite;
+
+    cactus.setOrigin(0.5, 1);
+    cactus.setScale(CACTUS_SCALE);
+    cactus.setDepth(2);
+    cactus.refreshBody();
+
+    const body = cactus.body as Phaser.Physics.Arcade.StaticBody;
+    body.setSize(220, 250);
+    body.setOffset(190, 185);
+    cactus.refreshBody();
+  }
+
   private spawnFox(x: number, y: number, speed: number) {
     const fox = this.enemies.create(x, y, "fox", 0) as EnemySprite;
     const foxBody = fox.body as Phaser.Physics.Arcade.Body;
+
     fox.enemyKind = "fox";
     fox.patrolSpeed = speed;
     fox.isStomped = false;
@@ -446,11 +584,13 @@ export class PlayScene extends Phaser.Scene {
     foxBody.setOffset(52, 148);
   }
 
-  private collectCoin(
-    _playerObject: unknown,
-    coinObject: unknown
-  ) {
+  private collectCoin(_playerObject: unknown, coinObject: unknown) {
     const coin = coinObject as Phaser.Physics.Arcade.Sprite;
+
+    if (this.isTransitioning) {
+      return;
+    }
+
     coin.destroy();
     this.sound.play("coin-sfx", { volume: 0.4 });
     this.collectedCoins += 1;
@@ -458,10 +598,11 @@ export class PlayScene extends Phaser.Scene {
     this.pushHud();
   }
 
-  private handleMushroomBounce(
-    playerObject: unknown,
-    mushroomObject: unknown
-  ) {
+  private handleMushroomBounce(playerObject: unknown, mushroomObject: unknown) {
+    if (this.isTransitioning) {
+      return;
+    }
+
     const player = playerObject as Phaser.Physics.Arcade.Sprite;
     const mushroom = mushroomObject as MushroomSprite;
     const playerBody = player.body as Phaser.Physics.Arcade.Body;
@@ -491,12 +632,9 @@ export class PlayScene extends Phaser.Scene {
     });
   }
 
-  private handleCactusContact(
-    _playerObject: unknown,
-    cactusObject: unknown
-  ) {
+  private handleCactusContact(_playerObject: unknown, cactusObject: unknown) {
     const cactus = cactusObject as CactusSprite;
-    if (!cactus.active || this.gameEnded) {
+    if (!cactus.active || this.gameEnded || this.isTransitioning) {
       return;
     }
 
@@ -515,11 +653,8 @@ export class PlayScene extends Phaser.Scene {
     this.loseLife(cactus.x < this.player.x ? 220 : -220);
   }
 
-  private handleEnemyContact(
-    _playerObject: unknown,
-    enemyObject: unknown
-  ) {
-    if (this.gameEnded) {
+  private handleEnemyContact(_playerObject: unknown, enemyObject: unknown) {
+    if (this.gameEnded || this.isTransitioning) {
       return;
     }
 
@@ -548,10 +683,7 @@ export class PlayScene extends Phaser.Scene {
     this.loseLife(enemy.x < this.player.x ? 220 : -220);
   }
 
-  private onEnemyHitPlatform(
-    enemyObject: unknown,
-    _platformObject: unknown
-  ) {
+  private onEnemyHitPlatform(enemyObject: unknown, _platformObject: unknown) {
     const enemy = enemyObject as EnemySprite;
 
     if (enemy.enemyKind !== "fox" || enemy.isStomped) {
@@ -616,7 +748,7 @@ export class PlayScene extends Phaser.Scene {
 
   private updateCamera() {
     const target = Math.max(0, this.player.x - GAME_WIDTH * 0.35);
-    this.maxCameraScrollX = Math.max(this.maxCameraScrollX, Math.min(target, WORLD_WIDTH - GAME_WIDTH));
+    this.maxCameraScrollX = Math.max(this.maxCameraScrollX, Math.min(target, this.currentWorldWidth - GAME_WIDTH));
     this.cameras.main.scrollX = Phaser.Math.Linear(this.cameras.main.scrollX, this.maxCameraScrollX, 0.12);
   }
 
@@ -641,7 +773,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private loseLife(knockbackX = 0) {
-    if (this.time.now < this.invulnerableUntil || this.gameEnded) {
+    if (this.time.now < this.invulnerableUntil || this.gameEnded || this.isTransitioning) {
       return;
     }
 
@@ -665,18 +797,42 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private completeLevel() {
+    if (this.gameEnded || this.isTransitioning) {
+      return;
+    }
+
+    const nextLevelIndex = this.currentLevelIndex + 1;
+    if (nextLevelIndex >= this.levels.length) {
+      this.sound.play("complete-sfx", { volume: 0.5 });
+      this.finishGame(true);
+      return;
+    }
+
+    this.isTransitioning = true;
     this.sound.play("complete-sfx", { volume: 0.5 });
-    this.finishGame(true);
+    this.clearLevelTimers();
+    this.physics.pause();
+    this.player.setVelocity(0, 0);
+    this.player.setTint(0xfff1a8);
+
+    this.time.delayedCall(900, () => {
+      if (this.gameEnded) {
+        return;
+      }
+
+      this.player.clearTint();
+      this.loadLevel(nextLevelIndex);
+      this.isTransitioning = false;
+    });
   }
 
   private finishGame(completed = false) {
     this.gameEnded = true;
+    this.isTransitioning = false;
     this.stopBackgroundMusic();
     this.player.setVelocity(0, 0);
     this.player.setTint(completed ? 0xfff1a8 : 0xffd1d1);
-    this.foxTimer?.remove(false);
-    this.eagleTimer?.remove(false);
-    this.difficultyTimer?.remove(false);
+    this.clearLevelTimers();
     this.physics.pause();
 
     const result: GameResult = {
@@ -693,7 +849,9 @@ export class PlayScene extends Phaser.Scene {
   private pushHud() {
     this.bridge.onHudChange({
       lives: this.lives,
-      score: this.score
+      score: this.score,
+      level: this.currentLevel.number,
+      levelLabel: this.currentLevel.label
     });
   }
 
