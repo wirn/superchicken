@@ -32,7 +32,7 @@ const FOX_SCALE = 0.34;
 const FOX_SPAWN_Y_OFFSET = 6;
 const MUSHROOM_SCALE = 0.19;
 const MUSHROOM_BOUNCE_VELOCITY = -760;
-const CACTUS_SCALE = 0.17;
+const CACTUS_SCALE = 0.15;
 const WALK_SPEED = 240;
 const RUN_SPEED = 340;
 
