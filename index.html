@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Super Chicken</title>
+    <meta
+      name="description"
+      content="Super Chicken är ett färgglatt 2D-plattformsspel med kycklingar, rävar, örnar och topplista."
+    />
+  </head>
+  <body>
+    <div class="app-shell">
+      <main class="stage">
+        <div id="menu-overlay" class="overlay overlay--visible">
+          <section class="overlay-card">
+            <h1>Super Chicken</h1>
+            <p class="summary-text">
+              Styrning: <strong>WASD</strong> för rörelse, <strong>Space</strong> för hopp.
+            </p>
+            <div class="button-row">
+              <button id="start-button" class="action-button">Starta spel</button>
+            </div>
+            <h2>Topplista</h2>
+            <ol id="highscore-list" class="highscore-list"></ol>
+          </section>
+        </div>
+
+        <div id="hud" class="hud hud--hidden">
+          <div class="hud__pill">Liv: <span id="hud-lives">3</span></div>
+          <div class="hud__pill">Poäng: <span id="hud-score">0</span></div>
+        </div>
+
+        <div id="game-container" class="game-container" aria-label="Spelyta"></div>
+
+        <div id="game-over-overlay" class="overlay">
+          <section class="overlay-card overlay-card--compact">
+            <h2 id="game-over-title">Game Over</h2>
+            <p id="game-over-summary" class="summary-text"></p>
+            <label class="input-row" for="player-name">
+              <span>Namn för topplistan</span>
+              <input
+                id="player-name"
+                maxlength="18"
+                type="text"
+                placeholder="Kycklinghjälte"
+              />
+            </label>
+            <div class="button-row">
+              <button id="save-score-button" class="action-button action-button--secondary">
+                Spara poäng
+              </button>
+              <button id="restart-button" class="action-button">Spela igen</button>
+            </div>
+            <h3 class="highscore-heading">Topplista</h3>
+            <ol class="highscore-list highscore-list--compact"></ol>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

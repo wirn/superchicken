@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300" viewBox="0 0 900 300" role="img" aria-label="Fox sprite sheet sneaking left with 3 non-overlapping frames">
+  <defs>
+    <style>
+      .stroke{stroke:#2f170c;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+      .fur{fill:#d7661f}
+      .fur2{fill:#f28a25}
+      .furDark{fill:#9c4317}
+      .furShade{fill:#b4551b}
+      .cream{fill:#fff1df}
+      .earInner{fill:#ffd9bf}
+      .legDark{fill:#2f1c17}
+      .legMid{fill:#533028}
+      .nose{fill:#171313}
+      .eye{fill:#171313}
+      .ground{fill:none;stroke:#00000014;stroke-width:1.5}
+    </style>
+    <clipPath id="frame1"><rect x="0" y="0" width="300" height="300"/></clipPath>
+    <clipPath id="frame2"><rect x="300" y="0" width="300" height="300"/></clipPath>
+    <clipPath id="frame3"><rect x="600" y="0" width="300" height="300"/></clipPath>
+  </defs>
+
+  <!-- FRAME 1 -->
+  <g clip-path="url(#frame1)">
+    <g transform="translate(0,0)">
+      <path class="ground" d="M34 218 H264"/>
+      <path class="fur stroke" d="M226 162 C248 149 262 141 274 142 C270 157 260 171 246 180 C234 175 228 170 226 162 Z"/>
+      <path class="cream stroke" d="M248 173 C262 164 271 158 278 160 C274 172 265 180 252 185 C247 182 246 178 248 173 Z"/>
+      <path class="furDark stroke" d="M190 141 C215 136 237 144 252 158 C241 169 231 175 214 177 C198 174 188 161 190 141 Z"/>
+      <path class="fur2 stroke" d="M106 135 C137 118 170 114 205 119 C228 122 245 133 252 150 C240 162 226 170 208 176 C185 183 160 183 137 173 C118 164 108 152 106 135 Z"/>
+      <path class="cream stroke" d="M107 141 C126 134 145 136 160 147 C155 164 145 177 129 185 C114 179 105 163 107 141 Z"/>
+      <path class="legDark stroke" d="M184 171 C194 171 202 179 201 192 L199 225 C199 232 193 237 186 237 H177 C170 237 165 232 165 225 L167 191 C168 179 174 171 184 171 Z"/>
+      <path class="legMid stroke" d="M136 168 C146 168 154 175 154 187 L153 224 C153 232 147 238 139 238 H130 C122 238 116 232 116 224 L118 186 C119 175 126 168 136 168 Z"/>
+      <path class="furShade stroke" d="M100 130 C84 132 68 142 56 156 C54 169 61 179 74 184 C94 186 111 179 123 163 C125 151 117 137 100 130 Z"/>
+      <path class="cream stroke" d="M85 149 C76 151 68 158 64 166 C70 175 83 176 97 171 C104 163 104 155 100 149 C96 147 91 147 85 149 Z"/>
+      <path class="fur2 stroke" d="M98 125 L108 100 L122 123 Z"/>
+      <path class="earInner" d="M103 121 L109 107 L117 121 Z"/>
+      <path class="fur2 stroke" d="M118 122 L132 99 L142 124 Z"/>
+      <path class="earInner" d="M123 120 L131 108 L137 123 Z"/>
+      <path class="nose stroke" d="M52 158 C56 154 61 154 64 158 C62 164 56 165 52 158 Z"/>
+      <circle class="eye" cx="88" cy="146" r="3.4"/>
+      <path class="stroke" d="M66 166 C78 171 92 171 104 166" fill="none"/>
+      <path class="stroke" d="M78 139 C89 132 101 131 114 136" fill="none"/>
+      <path class="fur stroke" d="M206 136 C217 129 226 127 237 128 C231 137 224 142 215 145 Z"/>
+    </g>
+  </g>
+
+  <!-- FRAME 2 -->
+  <g clip-path="url(#frame2)">
+    <g transform="translate(300,0)">
+      <path class="ground" d="M34 218 H264"/>
+      <path class="fur stroke" d="M225 160 C247 147 262 140 275 141 C272 156 261 169 247 179 C235 174 228 168 225 160 Z"/>
+      <path class="cream stroke" d="M248 172 C261 164 271 159 278 161 C275 173 265 181 252 184 C247 181 246 177 248 172 Z"/>
+      <path class="furDark stroke" d="M190 138 C214 134 235 141 250 154 C241 165 228 171 212 173 C197 171 188 157 190 138 Z"/>
+      <path class="fur2 stroke" d="M106 136 C138 120 171 116 205 121 C228 125 244 136 250 153 C239 165 225 173 207 179 C184 186 159 186 136 177 C118 169 108 155 106 136 Z"/>
+      <path class="cream stroke" d="M106 144 C125 137 144 140 158 151 C153 167 143 179 128 187 C113 182 105 166 106 144 Z"/>
+      <path class="legDark stroke" d="M181 171 C191 171 198 179 197 191 L194 224 C194 232 188 238 180 238 H172 C164 238 159 232 159 224 L161 190 C162 179 170 171 181 171 Z"/>
+      <path class="legMid stroke" d="M142 174 C151 174 158 181 157 193 L155 226 C155 233 149 238 142 238 H134 C126 238 121 233 121 226 L123 193 C124 181 132 174 142 174 Z"/>
+      <path class="legDark stroke" d="M102 170 C111 170 117 177 116 188 L114 212 C114 219 109 224 102 224 H95 C88 224 83 219 84 212 L86 188 C87 177 93 170 102 170 Z"/>
+      <path class="furShade stroke" d="M100 132 C84 133 68 143 56 156 C53 168 60 178 73 183 C93 185 110 178 122 163 C124 151 116 138 100 132 Z"/>
+      <path class="cream stroke" d="M84 149 C75 151 68 158 64 166 C70 175 83 176 97 171 C104 163 104 155 100 149 C95 147 90 147 84 149 Z"/>
+      <path class="fur2 stroke" d="M98 126 L108 101 L122 124 Z"/>
+      <path class="earInner" d="M103 121 L109 108 L117 121 Z"/>
+      <path class="fur2 stroke" d="M118 123 L132 101 L142 125 Z"/>
+      <path class="earInner" d="M123 120 L131 109 L137 123 Z"/>
+      <path class="nose stroke" d="M52 158 C56 154 61 154 64 158 C62 164 56 165 52 158 Z"/>
+      <circle class="eye" cx="88" cy="147" r="3.4"/>
+      <path class="stroke" d="M66 166 C78 171 91 171 103 166" fill="none"/>
+      <path class="stroke" d="M78 140 C90 133 102 132 114 137" fill="none"/>
+      <path class="fur stroke" d="M204 138 C216 132 226 131 236 132 C230 139 223 144 214 147 Z"/>
+    </g>
+  </g>
+
+  <!-- FRAME 3 -->
+  <g clip-path="url(#frame3)">
+    <g transform="translate(600,0)">
+      <path class="ground" d="M34 218 H264"/>
+      <path class="fur stroke" d="M224 158 C246 144 262 138 276 140 C273 155 263 169 248 179 C235 173 227 167 224 158 Z"/>
+      <path class="cream stroke" d="M247 171 C261 163 272 158 279 161 C276 174 266 182 252 186 C247 182 245 177 247 171 Z"/>
+      <path class="furDark stroke" d="M189 136 C214 131 237 139 252 154 C242 166 230 173 213 175 C197 173 188 158 189 136 Z"/>
+      <path class="fur2 stroke" d="M105 133 C138 117 172 113 208 119 C230 123 246 135 252 153 C240 165 226 174 208 180 C185 188 159 189 135 180 C117 172 107 151 105 133 Z"/>
+      <path class="cream stroke" d="M106 141 C125 135 144 138 160 149 C155 166 144 180 128 188 C112 183 104 166 106 141 Z"/>
+      <path class="legDark stroke" d="M188 168 C198 168 206 176 205 188 L203 222 C203 230 197 236 189 236 H181 C173 236 168 230 168 222 L170 187 C171 176 178 168 188 168 Z"/>
+      <path class="legMid stroke" d="M130 171 C140 171 148 179 147 191 L146 226 C146 233 140 239 132 239 H124 C116 239 111 233 112 226 L114 190 C115 179 121 171 130 171 Z"/>
+      <path class="furShade stroke" d="M99 127 C83 129 68 139 56 153 C54 166 61 176 73 181 C93 184 111 177 123 161 C125 147 117 133 99 127 Z"/>
+      <path class="cream stroke" d="M84 146 C75 149 68 155 64 163 C70 172 83 174 97 169 C104 162 104 153 100 147 C95 144 90 144 84 146 Z"/>
+      <path class="fur2 stroke" d="M97 122 L108 98 L121 120 Z"/>
+      <path class="earInner" d="M103 118 L109 105 L116 119 Z"/>
+      <path class="fur2 stroke" d="M117 119 L132 97 L141 121 Z"/>
+      <path class="earInner" d="M123 117 L130 105 L136 120 Z"/>
+      <path class="nose stroke" d="M52 155 C56 151 61 151 64 155 C62 161 56 162 52 155 Z"/>
+      <circle class="eye" cx="88" cy="143" r="3.4"/>
+      <path class="stroke" d="M66 163 C78 168 92 168 104 163" fill="none"/>
+      <path class="stroke" d="M78 136 C89 129 102 128 115 133" fill="none"/>
+      <path class="fur stroke" d="M207 134 C219 127 229 126 239 127 C233 136 225 141 216 144 Z"/>
+    </g>
+  </g>
+</svg>

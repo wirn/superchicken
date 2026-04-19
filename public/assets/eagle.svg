@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300" viewBox="0 0 900 300" role="img" aria-label="Eagle sprite sheet flying left with 3 non-overlapping frames">
+  <defs>
+    <style>
+      .body{fill:#6b4a2b}
+      .body2{fill:#8a6239}
+      .head{fill:#f3efe7}
+      .beak{fill:#d8a326}
+      .eye{fill:#1a1a1a}
+      .wingDark{fill:#4b3420}
+      .wingMid{fill:#6a492a}
+      .tail{fill:#ddd7cf}
+      .claw{fill:#c88f1b}
+      .stroke{stroke:#2b1d12;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+    </style>
+    <clipPath id="frame1"><rect x="0" y="0" width="300" height="300" rx="0"/></clipPath>
+    <clipPath id="frame2"><rect x="300" y="0" width="300" height="300" rx="0"/></clipPath>
+    <clipPath id="frame3"><rect x="600" y="0" width="300" height="300" rx="0"/></clipPath>
+  </defs>
+
+  <!-- FRAME 1: wings up -->
+  <g clip-path="url(#frame1)">
+    <g transform="translate(0,0)">
+      <!-- tail -->
+      <path class="tail stroke" d="M215 168 L246 146 L238 171 L259 162 L247 183 L266 179 L244 198 L222 190 Z"/>
+      <!-- far wing -->
+      <path class="wingDark stroke" d="M174 120 C208 70, 236 42, 261 30 C249 69, 241 100, 230 128 C218 144, 197 147, 174 120 Z"/>
+      <path class="wingMid stroke" d="M184 117 C214 79, 237 59, 252 51 C244 76, 236 101, 225 124 C214 136, 198 138, 184 117 Z"/>
+      <!-- near wing -->
+      <path class="wingDark stroke" d="M136 118 C105 72, 68 44, 34 30 C47 72, 63 106, 83 134 C102 146, 122 142, 136 118 Z"/>
+      <path class="wingMid stroke" d="M132 118 C104 85, 77 63, 51 49 C62 79, 75 104, 91 126 C103 135, 117 133, 132 118 Z"/>
+      <!-- body -->
+      <ellipse class="body stroke" cx="157" cy="154" rx="52" ry="31"/>
+      <ellipse class="body2 stroke" cx="145" cy="156" rx="28" ry="19"/>
+      <!-- head -->
+      <circle class="head stroke" cx="104" cy="142" r="19"/>
+      <path class="beak stroke" d="M87 144 L63 137 L87 132 Q81 139 87 144 Z"/>
+      <circle class="eye" cx="98" cy="138" r="2.8"/>
+      <!-- neck -->
+      <path class="head stroke" d="M119 149 C128 146, 131 150, 132 158 C126 160, 121 157, 119 149 Z"/>
+      <!-- legs/claws -->
+      <path class="claw stroke" d="M138 177 L126 194"/>
+      <path class="claw stroke" d="M126 194 l-8 7 M126 194 l2 10 M126 194 l9 4"/>
+      <path class="claw stroke" d="M163 180 L156 198"/>
+      <path class="claw stroke" d="M156 198 l-10 4 M156 198 l3 10 M156 198 l10 -3"/>
+    </g>
+  </g>
+
+  <!-- FRAME 2: wings mid -->
+  <g clip-path="url(#frame2)">
+    <g transform="translate(300,0)">
+      <path class="tail stroke" d="M214 164 L245 149 L235 170 L257 167 L242 183 L261 187 L237 197 L217 187 Z"/>
+      <path class="wingDark stroke" d="M174 125 C213 105, 247 96, 277 98 C253 118, 228 135, 205 150 C190 151, 180 144, 174 125 Z"/>
+      <path class="wingMid stroke" d="M180 126 C213 112, 238 108, 258 109 C238 122, 220 135, 201 146 C191 147, 184 141, 180 126 Z"/>
+      <path class="wingDark stroke" d="M136 123 C103 104, 67 95, 30 98 C55 119, 82 138, 108 152 C122 151, 131 142, 136 123 Z"/>
+      <path class="wingMid stroke" d="M131 125 C102 112, 76 107, 49 109 C69 124, 89 137, 107 148 C117 148, 125 142, 131 125 Z"/>
+      <ellipse class="body stroke" cx="157" cy="154" rx="52" ry="31"/>
+      <ellipse class="body2 stroke" cx="145" cy="156" rx="28" ry="19"/>
+      <circle class="head stroke" cx="104" cy="142" r="19"/>
+      <path class="beak stroke" d="M87 144 L63 137 L87 132 Q81 139 87 144 Z"/>
+      <circle class="eye" cx="98" cy="138" r="2.8"/>
+      <path class="head stroke" d="M119 149 C128 146, 131 150, 132 158 C126 160, 121 157, 119 149 Z"/>
+      <path class="claw stroke" d="M138 177 L126 194"/>
+      <path class="claw stroke" d="M126 194 l-8 7 M126 194 l2 10 M126 194 l9 4"/>
+      <path class="claw stroke" d="M163 180 L156 198"/>
+      <path class="claw stroke" d="M156 198 l-10 4 M156 198 l3 10 M156 198 l10 -3"/>
+    </g>
+  </g>
+
+  <!-- FRAME 3: wings down -->
+  <g clip-path="url(#frame3)">
+    <g transform="translate(600,0)">
+      <path class="tail stroke" d="M212 156 L243 149 L233 167 L253 172 L236 182 L253 192 L228 193 L211 178 Z"/>
+      <path class="wingDark stroke" d="M173 132 C204 168, 226 203, 239 235 C213 222, 192 209, 172 192 C164 176, 164 151, 173 132 Z"/>
+      <path class="wingMid stroke" d="M178 136 C201 166, 217 192, 228 216 C209 207, 192 197, 177 183 C171 170, 171 151, 178 136 Z"/>
+      <path class="wingDark stroke" d="M137 130 C109 164, 80 196, 42 230 C50 205, 63 180, 82 158 C101 141, 121 133, 137 130 Z"/>
+      <path class="wingMid stroke" d="M132 134 C108 160, 85 184, 59 207 C68 186, 79 167, 95 150 C108 140, 120 135, 132 134 Z"/>
+      <ellipse class="body stroke" cx="157" cy="154" rx="52" ry="31"/>
+      <ellipse class="body2 stroke" cx="145" cy="156" rx="28" ry="19"/>
+      <circle class="head stroke" cx="104" cy="142" r="19"/>
+      <path class="beak stroke" d="M87 144 L63 137 L87 132 Q81 139 87 144 Z"/>
+      <circle class="eye" cx="98" cy="138" r="2.8"/>
+      <path class="head stroke" d="M119 149 C128 146, 131 150, 132 158 C126 160, 121 157, 119 149 Z"/>
+      <path class="claw stroke" d="M138 177 L126 194"/>
+      <path class="claw stroke" d="M126 194 l-8 7 M126 194 l2 10 M126 194 l9 4"/>
+      <path class="claw stroke" d="M163 180 L156 198"/>
+      <path class="claw stroke" d="M156 198 l-10 4 M156 198 l3 10 M156 198 l10 -3"/>
+    </g>
+  </g>
+</svg>
