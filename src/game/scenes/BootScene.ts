@@ -26,6 +26,13 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 300,
       frameHeight: 300
     });
+    this.load.audio("coin-sfx", "/assets/sound/coin.mp3");
+    this.load.audio("complete-sfx", "/assets/sound/complete.mp3");
+    this.load.audio("damage-sfx", "/assets/sound/damage.mp3");
+    this.load.audio("death-sfx", "/assets/sound/death.mp3");
+    this.load.audio("bgm", "/assets/sound/background1.mp3");
+    this.load.audio("jump-sfx", "/assets/sound/jump.mp3");
+    this.load.audio("stomp-sfx", "/assets/sound/stomp.mp3");
     this.load.svg("castle", "/assets/castle.svg", {
       width: 160,
       height: 160

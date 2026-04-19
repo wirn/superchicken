@@ -62,6 +62,7 @@ export class PlayScene extends Phaser.Scene {
   private foxTimer?: Phaser.Time.TimerEvent;
   private eagleTimer?: Phaser.Time.TimerEvent;
   private difficultyTimer?: Phaser.Time.TimerEvent;
+  private backgroundMusic?: Phaser.Sound.BaseSound;
   private gameEnded = false;
 
   constructor() {
@@ -83,7 +84,15 @@ export class PlayScene extends Phaser.Scene {
     this.configureCollisions();
     this.configureInput();
     this.configureTimers();
+    this.startBackgroundMusic();
     this.pushHud();
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.stopBackgroundMusic();
+    });
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => {
+      this.stopBackgroundMusic();
+    });
   }
 
   update() {
@@ -115,6 +124,7 @@ export class PlayScene extends Phaser.Scene {
 
     if (wantsJump && body.blocked.down) {
       body.setVelocityY(-560);
+      this.sound.play("jump-sfx", { volume: 0.45 });
     }
 
     if (fastFall) {
@@ -274,6 +284,21 @@ export class PlayScene extends Phaser.Scene {
     });
   }
 
+  private startBackgroundMusic() {
+    this.stopBackgroundMusic();
+    this.backgroundMusic = this.sound.add("bgm", {
+      loop: true,
+      volume: 0.32
+    });
+    this.backgroundMusic.play();
+  }
+
+  private stopBackgroundMusic() {
+    this.backgroundMusic?.stop();
+    this.backgroundMusic?.destroy();
+    this.backgroundMusic = undefined;
+  }
+
   private createMushroom(x: number, y: number, extraScale = 1) {
     const mushroom = this.mushrooms.create(x, y, "mushroom", 0) as MushroomSprite;
     const scale = MUSHROOM_SCALE * extraScale;
@@ -427,6 +452,7 @@ export class PlayScene extends Phaser.Scene {
   ) {
     const coin = coinObject as Phaser.Physics.Arcade.Sprite;
     coin.destroy();
+    this.sound.play("coin-sfx", { volume: 0.4 });
     this.collectedCoins += 1;
     this.score += 1;
     this.pushHud();
@@ -451,6 +477,7 @@ export class PlayScene extends Phaser.Scene {
     }
 
     playerBody.setVelocityY(MUSHROOM_BOUNCE_VELOCITY);
+    this.sound.play("jump-sfx", { volume: 0.45 });
     mushroom.setFrame(1);
     mushroom.refreshBody();
     mushroom.resetFrameTimer?.remove(false);
@@ -595,6 +622,7 @@ export class PlayScene extends Phaser.Scene {
 
   private stompEnemy(enemy: EnemySprite) {
     enemy.isStomped = true;
+    this.sound.play("stomp-sfx", { volume: 0.45 });
     enemy.anims.stop();
     enemy.setVelocity(0, 0);
     enemy.setFlipX(false);
@@ -618,6 +646,11 @@ export class PlayScene extends Phaser.Scene {
     }
 
     this.lives -= 1;
+    if (this.lives <= 0) {
+      this.sound.play("death-sfx", { volume: 0.5 });
+    } else {
+      this.sound.play("damage-sfx", { volume: 0.45 });
+    }
     this.pushHud();
 
     if (this.lives <= 0) {
@@ -632,11 +665,13 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private completeLevel() {
+    this.sound.play("complete-sfx", { volume: 0.5 });
     this.finishGame(true);
   }
 
   private finishGame(completed = false) {
     this.gameEnded = true;
+    this.stopBackgroundMusic();
     this.player.setVelocity(0, 0);
     this.player.setTint(completed ? 0xfff1a8 : 0xffd1d1);
     this.foxTimer?.remove(false);
