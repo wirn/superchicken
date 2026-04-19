@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <defs>
+    <linearGradient id="cactusBody" x1="0" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#7fe04a"/>
+      <stop offset="55%" stop-color="#38a83d"/>
+      <stop offset="100%" stop-color="#1f6e2a"/>
+    </linearGradient>
+    <linearGradient id="cactusShadow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1b5e20" stop-opacity="0.0"/>
+      <stop offset="100%" stop-color="#103814" stop-opacity="0.45"/>
+    </linearGradient>
+    <linearGradient id="spike" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff0b3"/>
+      <stop offset="100%" stop-color="#d0ad57"/>
+    </linearGradient>
+    <linearGradient id="sand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f2d58b"/>
+      <stop offset="100%" stop-color="#d1a34e"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#000000" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- Left cactus -->
+  <g transform="translate(70,20)" filter="url(#softShadow)">
+    <ellipse cx="250" cy="430" rx="180" ry="36" fill="url(#sand)"/>
+    <g fill="#9c6f2f" opacity="0.75">
+      <ellipse cx="145" cy="438" rx="16" ry="8"/>
+      <ellipse cx="218" cy="446" rx="21" ry="9"/>
+      <ellipse cx="302" cy="438" rx="14" ry="7"/>
+      <ellipse cx="355" cy="445" rx="18" ry="8"/>
+    </g>
+
+    <!-- arms -->
+    <g>
+      <path d="M120 310
+               C 90 300, 70 275, 72 240
+               C 74 185, 118 150, 167 158
+               C 206 165, 224 201, 220 240
+               C 216 285, 190 318, 150 324
+               C 138 326, 128 322, 120 310 Z"
+            fill="url(#cactusBody)" stroke="#145521" stroke-width="8"/>
+      <path d="M332 316
+               C 370 313, 402 285, 406 238
+               C 410 184, 377 152, 337 158
+               C 300 164, 279 201, 283 243
+               C 288 289, 308 316, 332 316 Z"
+            fill="url(#cactusBody)" stroke="#145521" stroke-width="8"/>
+      <path d="M148 320 C 146 260, 148 208, 160 170" fill="none" stroke="#86ef5b" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+      <path d="M345 308 C 352 256, 349 203, 336 166" fill="none" stroke="#86ef5b" stroke-width="8" stroke-linecap="round" opacity="0.55"/>
+    </g>
+
+    <!-- body -->
+    <path d="M245 70
+             C 166 70, 122 135, 122 245
+             L 122 372
+             C 122 413, 156 444, 199 444
+             L 291 444
+             C 334 444, 368 413, 368 372
+             L 368 245
+             C 368 135, 324 70, 245 70 Z"
+          fill="url(#cactusBody)" stroke="#145521" stroke-width="10"/>
+    <path d="M202 92 C 176 138, 172 208, 175 437" fill="none" stroke="#89ef61" stroke-width="10" stroke-linecap="round" opacity="0.8"/>
+    <path d="M245 82 C 245 145, 245 228, 245 438" fill="none" stroke="#6dd54a" stroke-width="12" stroke-linecap="round" opacity="0.75"/>
+    <path d="M291 92 C 315 138, 319 208, 316 437" fill="none" stroke="#145521" stroke-width="10" stroke-linecap="round" opacity="0.28"/>
+    <ellipse cx="210" cy="132" rx="28" ry="42" fill="#d7ff85" opacity="0.25" transform="rotate(-14 210 132)"/>
+    <path d="M139 118 C 164 160, 164 354, 149 427" fill="none" stroke="url(#cactusShadow)" stroke-width="18" stroke-linecap="round"/>
+    <path d="M349 118 C 334 150, 332 356, 347 425" fill="none" stroke="url(#cactusShadow)" stroke-width="16" stroke-linecap="round"/>
+
+    <!-- spikes -->
+    <g fill="url(#spike)" stroke="#8c6b2b" stroke-width="2">
+      <polygon points="207,58 196,88 219,88"/>
+      <polygon points="154,95 140,124 166,120"/>
+      <polygon points="265,98 252,127 278,123"/>
+      <polygon points="111,152 92,176 122,170"/>
+      <polygon points="372,156 400,168 373,180"/>
+      <polygon points="97,216 72,224 98,236"/>
+      <polygon points="391,225 422,239 390,248"/>
+      <polygon points="100,287 72,300 103,308"/>
+      <polygon points="386,288 420,300 386,313"/>
+      <polygon points="116,354 92,377 125,372"/>
+      <polygon points="370,355 398,371 368,380"/>
+      <polygon points="177,185 164,212 189,209"/>
+      <polygon points="315,183 302,210 328,208"/>
+      <polygon points="182,252 166,280 193,276"/>
+      <polygon points="314,250 300,278 327,274"/>
+      <polygon points="176,323 162,350 188,346"/>
+      <polygon points="315,322 302,349 328,346"/>
+      <polygon points="143,398 129,426 156,421"/>
+      <polygon points="343,398 360,425 334,422"/>
+
+      <polygon points="80,189 53,180 72,204"/>
+      <polygon points="87,273 57,269 77,292"/>
+      <polygon points="187,219 213,230 188,244"/>
+      <polygon points="355,210 379,199 367,225"/>
+      <polygon points="354,287 382,279 367,306"/>
+    </g>
+  </g>
+
+  <!-- Right squashed cactus -->
+  <g transform="translate(630,35)" filter="url(#softShadow)">
+    <ellipse cx="245" cy="420" rx="220" ry="34" fill="url(#sand)"/>
+    <g fill="#9c6f2f" opacity="0.75">
+      <ellipse cx="98" cy="430" rx="18" ry="8"/>
+      <ellipse cx="185" cy="439" rx="24" ry="9"/>
+      <ellipse cx="297" cy="433" rx="18" ry="7"/>
+      <ellipse cx="395" cy="438" rx="22" ry="9"/>
+    </g>
+
+    <path d="M60 372
+             C 80 310, 154 275, 244 274
+             C 340 273, 423 304, 438 370
+             C 447 410, 419 438, 366 442
+             L 126 442
+             C 73 438, 48 410, 60 372 Z"
+          fill="url(#cactusBody)" stroke="#145521" stroke-width="10"/>
+
+    <path d="M142 300 C 123 325, 117 355, 118 439" fill="none" stroke="#89ef61" stroke-width="10" stroke-linecap="round" opacity="0.8"/>
+    <path d="M245 287 C 245 322, 245 360, 245 441" fill="none" stroke="#6dd54a" stroke-width="12" stroke-linecap="round" opacity="0.75"/>
+    <path d="M338 304 C 357 330, 365 360, 366 439" fill="none" stroke="#145521" stroke-width="10" stroke-linecap="round" opacity="0.28"/>
+    <ellipse cx="222" cy="332" rx="46" ry="22" fill="#d7ff85" opacity="0.22" transform="rotate(-8 222 332)"/>
+    <path d="M75 360 C 130 344, 158 289, 204 286" fill="none" stroke="#103814" stroke-opacity="0.22" stroke-width="18" stroke-linecap="round"/>
+    <path d="M414 362 C 370 347, 333 298, 288 289" fill="none" stroke="#103814" stroke-opacity="0.22" stroke-width="18" stroke-linecap="round"/>
+
+    <g fill="url(#spike)" stroke="#8c6b2b" stroke-width="2">
+      <polygon points="142,276 131,307 156,302"/>
+      <polygon points="242,258 231,291 256,287"/>
+      <polygon points="332,274 320,306 347,301"/>
+      <polygon points="84,308 68,338 97,330"/>
+      <polygon points="396,312 425,324 397,338"/>
+      <polygon points="54,360 24,365 53,383"/>
+      <polygon points="434,362 467,375 435,386"/>
+      <polygon points="74,418 50,439 82,437"/>
+      <polygon points="415,419 446,434 414,440"/>
+      <polygon points="173,334 155,359 184,358"/>
+      <polygon points="240,324 220,350 249,350"/>
+      <polygon points="309,334 292,360 321,359"/>
+      <polygon points="141,389 122,415 152,412"/>
+      <polygon points="243,388 224,414 255,411"/>
+      <polygon points="342,390 324,416 355,413"/>
+      <polygon points="272,282 283,250 298,281"/>
+      <polygon points="368,284 383,254 392,286"/>
+    </g>
+  </g>
+</svg>

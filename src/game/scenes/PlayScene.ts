@@ -20,6 +20,10 @@ type MushroomSprite = Phaser.Physics.Arcade.Sprite & {
   resetFrameTimer?: Phaser.Time.TimerEvent;
 };
 
+type CactusSprite = Phaser.Physics.Arcade.Sprite & {
+  resetFrameTimer?: Phaser.Time.TimerEvent;
+};
+
 const GAME_WIDTH = 960;
 const GAME_HEIGHT = 540;
 const WORLD_WIDTH = 7400;
@@ -28,6 +32,7 @@ const FOX_SCALE = 0.34;
 const FOX_SPAWN_Y_OFFSET = 6;
 const MUSHROOM_SCALE = 0.19;
 const MUSHROOM_BOUNCE_VELOCITY = -760;
+const CACTUS_SCALE = 0.17;
 const WALK_SPEED = 240;
 const RUN_SPEED = 340;
 
@@ -35,6 +40,7 @@ export class PlayScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private platforms!: Phaser.Physics.Arcade.StaticGroup;
   private mushrooms!: Phaser.Physics.Arcade.StaticGroup;
+  private cactuses!: Phaser.Physics.Arcade.StaticGroup;
   private coins!: Phaser.Physics.Arcade.Group;
   private enemies!: Phaser.Physics.Arcade.Group;
   private goal!: Phaser.Types.Physics.Arcade.ImageWithStaticBody;
@@ -158,6 +164,7 @@ export class PlayScene extends Phaser.Scene {
   private createWorld() {
     this.platforms = this.physics.add.staticGroup();
     this.mushrooms = this.physics.add.staticGroup();
+    this.cactuses = this.physics.add.staticGroup();
 
     const widths = [520, 430, 510, 360, 540, 420, 500, 390, 580, 440, 520, 460];
     const heights = [430, 398, 364, 404, 380, 342, 392, 358, 420, 372, 336, 390];
@@ -194,10 +201,15 @@ export class PlayScene extends Phaser.Scene {
 
   private decorateSegment(segment: GroundSegment, index: number) {
     const mushroomCount = index % 2 === 0 ? 1 : 0;
+    const cactusCount = index > 0 && index < 10 && index % 3 === 1 ? 1 : 0;
     const bushCount = 1 + ((index + 1) % 2);
 
     for (let i = 0; i < mushroomCount; i += 1) {
       this.createMushroom(segment.x + 90 + i * 120, segment.y - 6, 1 + (i % 2) * 0.08);
+    }
+
+    for (let i = 0; i < cactusCount; i += 1) {
+      this.createCactus(segment.x + segment.width * 0.62 + i * 70, segment.y - 2);
     }
 
     for (let i = 0; i < bushCount; i += 1) {
@@ -276,6 +288,19 @@ export class PlayScene extends Phaser.Scene {
     mushroom.refreshBody();
   }
 
+  private createCactus(x: number, y: number) {
+    const cactus = this.cactuses.create(x, y, "cactus", 0) as CactusSprite;
+    cactus.setOrigin(0.5, 1);
+    cactus.setScale(CACTUS_SCALE);
+    cactus.setDepth(2);
+    cactus.refreshBody();
+
+    const body = cactus.body as Phaser.Physics.Arcade.StaticBody;
+    body.setSize(220, 250);
+    body.setOffset(190, 185);
+    cactus.refreshBody();
+  }
+
   private createGroups() {
     this.coins = this.physics.add.group({ allowGravity: false, immovable: true });
     this.enemies = this.physics.add.group();
@@ -304,6 +329,7 @@ export class PlayScene extends Phaser.Scene {
   private configureCollisions() {
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.overlap(this.player, this.mushrooms, this.handleMushroomBounce, undefined, this);
+    this.physics.add.overlap(this.player, this.cactuses, this.handleCactusContact, undefined, this);
     this.physics.add.collider(this.enemies, this.platforms, this.onEnemyHitPlatform, undefined, this);
     this.physics.add.overlap(this.player, this.coins, this.collectCoin, undefined, this);
     this.physics.add.overlap(this.player, this.enemies, this.handleEnemyContact, undefined, this);
@@ -436,6 +462,30 @@ export class PlayScene extends Phaser.Scene {
       mushroom.setFrame(0);
       mushroom.refreshBody();
     });
+  }
+
+  private handleCactusContact(
+    _playerObject: unknown,
+    cactusObject: unknown
+  ) {
+    const cactus = cactusObject as CactusSprite;
+    if (!cactus.active || this.gameEnded) {
+      return;
+    }
+
+    cactus.setFrame(1);
+    cactus.refreshBody();
+    cactus.resetFrameTimer?.remove(false);
+    cactus.resetFrameTimer = this.time.delayedCall(180, () => {
+      if (!cactus.active) {
+        return;
+      }
+
+      cactus.setFrame(0);
+      cactus.refreshBody();
+    });
+
+    this.loseLife(cactus.x < this.player.x ? 220 : -220);
   }
 
   private handleEnemyContact(

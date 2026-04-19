@@ -18,6 +18,10 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 450,
       frameHeight: 420
     });
+    this.load.spritesheet("cactus", "/assets/cactus.svg", {
+      frameWidth: 600,
+      frameHeight: 520
+    });
     this.load.spritesheet("fox", "/assets/fox.svg", {
       frameWidth: 300,
       frameHeight: 300
