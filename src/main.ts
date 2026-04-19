@@ -101,6 +101,19 @@ function startGame() {
   });
 }
 
+function shouldStartFromMenu(event: KeyboardEvent) {
+  if (!menuOverlay?.classList.contains("overlay--visible")) {
+    return false;
+  }
+
+  const target = event.target as HTMLElement | null;
+  if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+    return false;
+  }
+
+  return event.key === " " || event.key === "Spacebar" || event.key === "ArrowRight";
+}
+
 function saveScore() {
   if (!lastResult || hasSavedCurrentScore) {
     return;
@@ -121,4 +134,12 @@ nameInput?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     saveScore();
   }
+});
+document.addEventListener("keydown", (event) => {
+  if (!shouldStartFromMenu(event)) {
+    return;
+  }
+
+  event.preventDefault();
+  startGame();
 });

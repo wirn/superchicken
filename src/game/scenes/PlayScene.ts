@@ -28,6 +28,8 @@ const FOX_SCALE = 0.34;
 const FOX_SPAWN_Y_OFFSET = 6;
 const MUSHROOM_SCALE = 0.19;
 const MUSHROOM_BOUNCE_VELOCITY = -760;
+const WALK_SPEED = 240;
+const RUN_SPEED = 340;
 
 export class PlayScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -86,15 +88,20 @@ export class PlayScene extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     const moveLeft = this.keys.left.isDown;
     const moveRight = this.keys.right.isDown;
+    const isSprinting = this.keys.sprint.isDown;
     const isMoving = moveLeft !== moveRight;
-    const wantsJump = Phaser.Input.Keyboard.JustDown(this.keys.jump) || Phaser.Input.Keyboard.JustDown(this.keys.up);
+    const wantsJump =
+      Phaser.Input.Keyboard.JustDown(this.keys.jump) ||
+      Phaser.Input.Keyboard.JustDown(this.keys.up) ||
+      Phaser.Input.Keyboard.JustDown(this.keys.jumpAlt);
     const fastFall = this.keys.down.isDown && !body.blocked.down;
+    const moveSpeed = isSprinting ? RUN_SPEED : WALK_SPEED;
 
     if (moveLeft && !moveRight) {
-      body.setVelocityX(-240);
+      body.setVelocityX(-moveSpeed);
       this.player.setFlipX(true);
     } else if (moveRight && !moveLeft) {
-      body.setVelocityX(240);
+      body.setVelocityX(moveSpeed);
       this.player.setFlipX(false);
     } else {
       body.setVelocityX(0);
@@ -309,7 +316,9 @@ export class PlayScene extends Phaser.Scene {
       right: Phaser.Input.Keyboard.KeyCodes.D,
       up: Phaser.Input.Keyboard.KeyCodes.W,
       down: Phaser.Input.Keyboard.KeyCodes.S,
-      jump: Phaser.Input.Keyboard.KeyCodes.SPACE
+      jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
+      jumpAlt: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+      sprint: Phaser.Input.Keyboard.KeyCodes.SHIFT
     }) as Record<string, Phaser.Input.Keyboard.Key>;
   }
 
