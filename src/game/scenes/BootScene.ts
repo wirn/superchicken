@@ -42,6 +42,10 @@ export class BootScene extends Phaser.Scene {
       width: 160,
       height: 160
     });
+    this.load.svg("icicle", "/assets/icicle.svg", {
+      width: 72,
+      height: 144
+    });
   }
 
   create() {

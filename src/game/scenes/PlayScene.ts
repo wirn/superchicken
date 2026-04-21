@@ -26,6 +26,14 @@ type CactusSprite = Phaser.Physics.Arcade.Sprite & {
   resetFrameTimer?: Phaser.Time.TimerEvent;
 };
 
+type IcicleState = "hanging" | "shaking" | "falling" | "spent";
+
+type IcicleSprite = Phaser.Physics.Arcade.Sprite & {
+  icicleState: IcicleState;
+  baseX: number;
+  hasDamagedPlayer?: boolean;
+};
+
 const GAME_WIDTH = 960;
 const GAME_HEIGHT = 540;
 const RESPAWN_Y_OFFSET = 78;
@@ -33,6 +41,8 @@ const FOX_SCALE = 0.34;
 const FOX_SPAWN_Y_OFFSET = 6;
 const MUSHROOM_BOUNCE_VELOCITY = -760;
 const CACTUS_SCALE = 0.15;
+const ICICLE_SCALE = 0.34;
+const ICICLE_TRIGGER_DISTANCE_X = 120;
 
 export class PlayScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -42,6 +52,7 @@ export class PlayScene extends Phaser.Scene {
   private goals!: Phaser.Physics.Arcade.StaticGroup;
   private coins!: Phaser.Physics.Arcade.Group;
   private enemies!: Phaser.Physics.Arcade.Group;
+  private icicles!: Phaser.Physics.Arcade.Group;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private bridge = getRuntimeBridge();
   private segments: GroundSegment[] = [];
@@ -152,6 +163,7 @@ export class PlayScene extends Phaser.Scene {
     }
 
     this.updateCheckpoint();
+    this.updateIcicles();
     this.updateEnemies();
     this.updateCamera();
   }
@@ -201,6 +213,7 @@ export class PlayScene extends Phaser.Scene {
     this.goals.clear(true, true);
     this.coins.clear(true, true);
     this.enemies.clear(true, true);
+    this.icicles.clear(true, true);
     this.backdropObjects.forEach((object) => object.destroy());
     this.backdropObjects = [];
   }
@@ -286,7 +299,7 @@ export class PlayScene extends Phaser.Scene {
 
   private decorateSegment(segment: GroundSegment, index: number) {
     const mushroomCount = index % 2 === 0 ? 1 : 0;
-    const cactusCount = index > 0 && index < 10 && index % 3 === 1 ? 1 : 0;
+    const cactusCount = this.currentLevel.number === 2 ? 0 : index > 0 && index < 10 && index % 3 === 1 ? 1 : 0;
     const bushCount = 1 + ((index + 1) % 2);
 
     for (let i = 0; i < mushroomCount; i += 1) {
@@ -339,7 +352,7 @@ export class PlayScene extends Phaser.Scene {
     this.physics.resume();
 
     if (!isInitialLoad) {
-      this.invulnerableUntil = this.time.now + 900;
+      this.invulnerableUntil = this.time.now + 1300;
     }
   }
 
@@ -390,6 +403,7 @@ export class PlayScene extends Phaser.Scene {
     this.goals = this.physics.add.staticGroup();
     this.coins = this.physics.add.group({ allowGravity: false, immovable: true });
     this.enemies = this.physics.add.group();
+    this.icicles = this.physics.add.group();
   }
 
   private configureCollisions() {
@@ -399,6 +413,8 @@ export class PlayScene extends Phaser.Scene {
     this.physics.add.collider(this.enemies, this.platforms, this.onEnemyHitPlatform, undefined, this);
     this.physics.add.overlap(this.player, this.coins, this.collectCoin, undefined, this);
     this.physics.add.overlap(this.player, this.enemies, this.handleEnemyContact, undefined, this);
+    this.physics.add.collider(this.icicles, this.platforms, this.handleIcicleHitPlatform, undefined, this);
+    this.physics.add.overlap(this.player, this.icicles, this.handleIcicleContact, undefined, this);
     this.physics.add.overlap(this.player, this.goals, this.completeLevel, undefined, this);
   }
 
@@ -420,6 +436,8 @@ export class PlayScene extends Phaser.Scene {
         this.spawnFox(segment.x + segment.width * 0.55, segment.y - FOX_SPAWN_Y_OFFSET, 70 + index * 8);
       }
     });
+
+    this.populateIcicles();
   }
 
   private configureInput() {
@@ -581,6 +599,40 @@ export class PlayScene extends Phaser.Scene {
     cactus.refreshBody();
   }
 
+  private populateIcicles() {
+    if (!this.currentLevel.icicles?.length) {
+      return;
+    }
+
+    this.currentLevel.icicles.forEach(({ segmentIndex, offsetX }) => {
+      const segment = this.segments[segmentIndex];
+      if (!segment) {
+        return;
+      }
+
+      const x = Phaser.Math.Clamp(segment.x + offsetX, segment.x + 56, segment.x + segment.width - 56);
+      this.createIcicle(x);
+    });
+  }
+
+  private createIcicle(x: number) {
+    const icicle = this.icicles.create(x, 0, "icicle") as IcicleSprite;
+    const body = icicle.body as Phaser.Physics.Arcade.Body;
+
+    icicle.icicleState = "hanging";
+    icicle.baseX = x;
+    icicle.hasDamagedPlayer = false;
+    icicle.setOrigin(0.5, 0);
+    icicle.setScale(ICICLE_SCALE);
+    icicle.setDepth(3);
+    icicle.setVelocity(0, 0);
+
+    body.setAllowGravity(false);
+    body.setImmovable(true);
+    body.setSize(72, 118);
+    body.setOffset(64, 12);
+  }
+
   private spawnFox(x: number, y: number, speed: number) {
     const fox = this.enemies.create(x, y, "fox", 0) as EnemySprite;
     const foxBody = fox.body as Phaser.Physics.Arcade.Body;
@@ -680,6 +732,42 @@ export class PlayScene extends Phaser.Scene {
     this.loseLife(cactus.x < this.player.x ? 220 : -220);
   }
 
+  private handleIcicleContact(_playerObject: unknown, icicleObject: unknown) {
+    const icicle = icicleObject as IcicleSprite;
+    if (!icicle.active || icicle.icicleState === "spent" || icicle.hasDamagedPlayer || this.gameEnded || this.isTransitioning) {
+      return;
+    }
+
+    icicle.hasDamagedPlayer = true;
+    icicle.icicleState = "spent";
+    icicle.disableBody(true, true);
+    this.loseLife(icicle.x < this.player.x ? 170 : -170);
+  }
+
+  private handleIcicleHitPlatform(icicleObject: unknown, _platformObject: unknown) {
+    const icicle = icicleObject as IcicleSprite;
+    if (!icicle.active || icicle.icicleState !== "falling") {
+      return;
+    }
+
+    const body = icicle.body as Phaser.Physics.Arcade.Body;
+    if (!body.blocked.down && !body.touching.down) {
+      return;
+    }
+
+    icicle.icicleState = "spent";
+    body.setVelocity(0, 0);
+    body.setAllowGravity(false);
+    body.setImmovable(true);
+    body.enable = false;
+    this.tweens.add({
+      targets: icicle,
+      alpha: 0,
+      duration: 180,
+      onComplete: () => icicle.destroy()
+    });
+  }
+
   private handleEnemyContact(_playerObject: unknown, enemyObject: unknown) {
     if (this.gameEnded || this.isTransitioning) {
       return;
@@ -733,6 +821,64 @@ export class PlayScene extends Phaser.Scene {
       this.checkpointX = Math.max(segment.x + 48, this.player.x);
       this.checkpointY = segment.y;
     }
+  }
+
+  private updateIcicles() {
+    this.icicles.children.each((child) => {
+      const icicle = child as IcicleSprite;
+      if (!icicle.active || icicle.icicleState !== "hanging") {
+        return false;
+      }
+
+      const isNearEnough =
+        Math.abs(this.player.x - icicle.x) <= ICICLE_TRIGGER_DISTANCE_X;
+
+      if (isNearEnough) {
+        this.triggerIcicle(icicle);
+      }
+
+      return false;
+    });
+  }
+
+  private triggerIcicle(icicle: IcicleSprite) {
+    if (!icicle.active || icicle.icicleState !== "hanging") {
+      return;
+    }
+
+    icicle.icicleState = "shaking";
+    icicle.setX(icicle.baseX);
+
+    this.tweens.add({
+      targets: icicle,
+      x: {
+        from: icicle.baseX - 4,
+        to: icicle.baseX + 4
+      },
+      duration: 38,
+      repeat: 5,
+      yoyo: true,
+      onComplete: () => {
+        if (!icicle.active) {
+          return;
+        }
+
+        icicle.setX(icicle.baseX);
+        this.dropIcicle(icicle);
+      }
+    });
+  }
+
+  private dropIcicle(icicle: IcicleSprite) {
+    if (!icicle.active || icicle.icicleState !== "shaking") {
+      return;
+    }
+
+    const body = icicle.body as Phaser.Physics.Arcade.Body;
+    icicle.icicleState = "falling";
+    body.setImmovable(false);
+    body.setAllowGravity(true);
+    body.setVelocity(0, 40);
   }
 
   private updateEnemies() {
@@ -820,7 +966,7 @@ export class PlayScene extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     this.player.setPosition(this.checkpointX, this.checkpointY - RESPAWN_Y_OFFSET);
     body.setVelocity(knockbackX, -250);
-    this.invulnerableUntil = this.time.now + 1000;
+    this.invulnerableUntil = this.time.now + 1500;
   }
 
   private completeLevel() {

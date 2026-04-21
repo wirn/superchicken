@@ -3,6 +3,10 @@ export interface LevelConfig {
   label: string;
   musicKey: string;
   groundTextureKey: string;
+  icicles?: Array<{
+    segmentIndex: number;
+    offsetX: number;
+  }>;
   bounceSprite: {
     textureKey: string;
     baseScale: number;
@@ -48,6 +52,7 @@ function createLevel(
   number: number,
   musicKey: string,
   groundTextureKey: string,
+  icicles: LevelConfig["icicles"],
   bounceSprite: LevelConfig["bounceSprite"],
   backdrop: LevelConfig["backdrop"],
   movement: LevelConfig["movement"],
@@ -62,6 +67,7 @@ function createLevel(
     label: `Level ${number}`,
     musicKey,
     groundTextureKey,
+    icicles,
     bounceSprite,
     backdrop,
     movement,
@@ -82,6 +88,7 @@ export const LEVELS: LevelConfig[] = [
     1,
     "bgm-level-1",
     "ground",
+    undefined,
     {
       textureKey: "mushroom",
       baseScale: 0.19,
@@ -122,6 +129,14 @@ export const LEVELS: LevelConfig[] = [
     2,
     "bgm-level-2",
     "ground-ice",
+    [
+      { segmentIndex: 1, offsetX: 160 },
+      { segmentIndex: 2, offsetX: 280 },
+      { segmentIndex: 4, offsetX: 210 },
+      { segmentIndex: 6, offsetX: 300 },
+      { segmentIndex: 8, offsetX: 170 },
+      { segmentIndex: 10, offsetX: 260 }
+    ],
     {
       textureKey: "snowman",
       baseScale: 0.19,
