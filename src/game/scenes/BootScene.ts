@@ -30,6 +30,9 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 300,
       frameHeight: 300
     });
+    this.load.image("polar-bear-1", "/assets/polar-bear-1.png");
+    this.load.image("polar-bear-2", "/assets/polar-bear-2.png");
+    this.load.image("polar-bear-3", "/assets/polar-bear-3.png");
     this.load.audio("coin-sfx", "/assets/sound/coin.mp3");
     this.load.audio("complete-sfx", "/assets/sound/complete.mp3");
     this.load.audio("damage-sfx", "/assets/sound/damage.mp3");

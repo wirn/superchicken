@@ -38,11 +38,16 @@ const GAME_WIDTH = 960;
 const GAME_HEIGHT = 540;
 const RESPAWN_Y_OFFSET = 78;
 const FOX_SCALE = 0.34;
+const POLAR_BEAR_SCALE = 0.24;
 const FOX_SPAWN_Y_OFFSET = 6;
 const MUSHROOM_BOUNCE_VELOCITY = -760;
 const CACTUS_SCALE = 0.15;
 const ICICLE_SCALE = 0.34;
 const ICICLE_TRIGGER_DISTANCE_X = 120;
+const PLAYER_JUMP_VELOCITY = -560;
+const PLAYER_JUMP_HOLD_TIME = 180;
+const PLAYER_JUMP_HOLD_FORCE = -18;
+const PLAYER_JUMP_RELEASE_DAMPING = 0.48;
 
 export class PlayScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -77,6 +82,7 @@ export class PlayScene extends Phaser.Scene {
   private levelBanner?: Phaser.GameObjects.Text;
   private gameEnded = false;
   private isTransitioning = false;
+  private jumpHoldUntil = 0;
   private readonly levels = LEVELS;
   private currentLevelIndex = getRuntimeStartLevelIndex();
   private currentLevel: LevelConfig = this.levels[this.currentLevelIndex];
@@ -122,6 +128,7 @@ export class PlayScene extends Phaser.Scene {
       Phaser.Input.Keyboard.JustDown(this.keys.jump) ||
       Phaser.Input.Keyboard.JustDown(this.keys.up) ||
       Phaser.Input.Keyboard.JustDown(this.keys.jumpAlt);
+    const jumpHeld = this.keys.jump.isDown || this.keys.up.isDown || this.keys.jumpAlt.isDown;
     const fastFall = this.keys.down.isDown && !body.blocked.down;
     const moveConfig = this.currentLevel.movement;
     const targetSpeed = isMoving ? (moveLeft ? -1 : 1) * (isSprinting ? moveConfig.runSpeed : moveConfig.walkSpeed) : 0;
@@ -137,8 +144,16 @@ export class PlayScene extends Phaser.Scene {
     }
 
     if (wantsJump && body.blocked.down) {
-      body.setVelocityY(-560);
+      body.setVelocityY(PLAYER_JUMP_VELOCITY);
+      this.jumpHoldUntil = this.time.now + PLAYER_JUMP_HOLD_TIME;
       this.sound.play("jump-sfx", { volume: 0.45 });
+    }
+
+    if (jumpHeld && this.time.now < this.jumpHoldUntil && body.velocity.y < 0) {
+      body.setVelocityY(body.velocity.y + PLAYER_JUMP_HOLD_FORCE);
+    } else if (!jumpHeld && this.time.now < this.jumpHoldUntil && body.velocity.y < 0) {
+      body.setVelocityY(Math.max(body.velocity.y * PLAYER_JUMP_RELEASE_DAMPING, -180));
+      this.jumpHoldUntil = 0;
     }
 
     if (fastFall) {
@@ -203,6 +218,7 @@ export class PlayScene extends Phaser.Scene {
     this.foxSpawnDelay = this.currentLevel.foxSpawnDelay;
     this.eagleSpawnDelay = this.currentLevel.eagleSpawnDelay;
     this.invulnerableUntil = 0;
+    this.jumpHoldUntil = 0;
   }
 
   private clearLevelObjects() {
@@ -348,6 +364,7 @@ export class PlayScene extends Phaser.Scene {
     this.player.setVelocity(0, 0);
     this.player.setFrame(1);
     body.setVelocity(0, 0);
+    this.jumpHoldUntil = 0;
     this.cameras.main.scrollX = 0;
     this.physics.resume();
 
@@ -634,19 +651,30 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private spawnFox(x: number, y: number, speed: number) {
-    const fox = this.enemies.create(x, y, "fox", 0) as EnemySprite;
+    const isLevelTwo = this.currentLevel.number === 2;
+    const fox = this.enemies.create(x, y, isLevelTwo ? "polar-bear-1" : "fox", 0) as EnemySprite;
     const foxBody = fox.body as Phaser.Physics.Arcade.Body;
 
     fox.enemyKind = "fox";
     fox.patrolSpeed = speed;
     fox.isStomped = false;
     fox.setOrigin(0.5, 1);
-    fox.setScale(FOX_SCALE);
+    fox.setScale(isLevelTwo ? POLAR_BEAR_SCALE : FOX_SCALE);
     fox.setVelocityX(speed);
     fox.setFlipX(true);
     fox.setDepth(5);
     fox.setAlpha(1);
-    fox.anims.play("fox-sneak");
+    if (!isLevelTwo) {
+      fox.anims.play("fox-sneak");
+    }
+
+    if (isLevelTwo) {
+      fox.setY(y - 12);
+      foxBody.setSize(420, 170);
+      foxBody.setOffset(76, 152);
+      return;
+    }
+
     foxBody.setSize(190, 104);
     foxBody.setOffset(52, 148);
   }
@@ -900,6 +928,11 @@ export class PlayScene extends Phaser.Scene {
 
         const direction = Math.sign((enemy.body as Phaser.Physics.Arcade.Body).velocity.x) || 1;
         const groundAhead = this.findSegmentAtX(enemy.x + direction * 34);
+
+        if (this.currentLevel.number === 2) {
+          const polarBearFrame = 1 + (Math.floor(this.time.now / 130) % 3);
+          enemy.setTexture(`polar-bear-${polarBearFrame}`);
+        }
 
         if (!groundAhead) {
           enemy.setVelocityX(-direction * enemy.patrolSpeed);
