@@ -6,10 +6,12 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.spritesheet("chicken", "/assets/chicken-run.svg", {
-      frameWidth: 192,
-      frameHeight: 192
-    });
+    this.load.image("chicken-0", "/assets/chicken/chicken-0.png");
+    this.load.image("chicken-1", "/assets/chicken/chicken-1.png");
+    this.load.image("chicken-2", "/assets/chicken/chicken-2.png");
+    this.load.image("chicken-3", "/assets/chicken/chicken-3.png");
+    this.load.image("chicken-4", "/assets/chicken/chicken-4.png");
+    this.load.image("chicken-5", "/assets/chicken/chicken-5.png");
     this.load.spritesheet("eagle", "/assets/eagle.svg", {
       frameWidth: 300,
       frameHeight: 300
@@ -30,9 +32,9 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 300,
       frameHeight: 300
     });
-    this.load.image("polar-bear-1", "/assets/polar-bear-1.png");
-    this.load.image("polar-bear-2", "/assets/polar-bear-2.png");
-    this.load.image("polar-bear-3", "/assets/polar-bear-3.png");
+    this.load.image("polar-bear-1", "/assets/polar-bear/polar-bear-1.png");
+    this.load.image("polar-bear-2", "/assets/polar-bear/polar-bear-2.png");
+    this.load.image("polar-bear-3", "/assets/polar-bear/polar-bear-3.png");
     this.load.audio("coin-sfx", "/assets/sound/coin.mp3");
     this.load.audio("complete-sfx", "/assets/sound/complete.mp3");
     this.load.audio("damage-sfx", "/assets/sound/damage.mp3");

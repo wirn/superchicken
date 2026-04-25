@@ -44,9 +44,10 @@ const MUSHROOM_BOUNCE_VELOCITY = -760;
 const CACTUS_SCALE = 0.15;
 const ICICLE_SCALE = 0.34;
 const ICICLE_TRIGGER_DISTANCE_X = 120;
-const PLAYER_JUMP_VELOCITY = -560;
+const PLAYER_SCALE = 0.22;
+const PLAYER_JUMP_VELOCITY = -525;
 const PLAYER_JUMP_HOLD_TIME = 180;
-const PLAYER_JUMP_HOLD_FORCE = -18;
+const PLAYER_JUMP_HOLD_FORCE = -15;
 const PLAYER_JUMP_RELEASE_DAMPING = 0.48;
 
 export class PlayScene extends Phaser.Scene {
@@ -97,7 +98,6 @@ export class PlayScene extends Phaser.Scene {
 
     this.createGroups();
     this.createPlayer();
-    this.createChickenAnimations();
     this.createFoxAnimations();
     this.createEagleAnimations();
     this.configureCollisions();
@@ -123,6 +123,7 @@ export class PlayScene extends Phaser.Scene {
     const moveLeft = this.keys.left.isDown;
     const moveRight = this.keys.right.isDown;
     const isSprinting = this.keys.sprint.isDown;
+    const isRecoveringFromDamage = this.time.now < this.invulnerableUntil;
     const isMoving = moveLeft !== moveRight;
     const wantsJump =
       Phaser.Input.Keyboard.JustDown(this.keys.jump) ||
@@ -131,45 +132,50 @@ export class PlayScene extends Phaser.Scene {
     const jumpHeld = this.keys.jump.isDown || this.keys.up.isDown || this.keys.jumpAlt.isDown;
     const fastFall = this.keys.down.isDown && !body.blocked.down;
     const moveConfig = this.currentLevel.movement;
-    const targetSpeed = isMoving ? (moveLeft ? -1 : 1) * (isSprinting ? moveConfig.runSpeed : moveConfig.walkSpeed) : 0;
+    const targetSpeed =
+      !isRecoveringFromDamage && isMoving
+        ? (moveLeft ? -1 : 1) * (isSprinting ? moveConfig.runSpeed : moveConfig.walkSpeed)
+        : 0;
     const acceleration = body.blocked.down ? moveConfig.groundAcceleration : moveConfig.airAcceleration;
     const deceleration = moveConfig.groundDeceleration;
 
     body.setVelocityX(this.getNextHorizontalVelocity(body.velocity.x, targetSpeed, isMoving ? acceleration : deceleration));
 
-    if (moveLeft && !moveRight) {
+    if (!isRecoveringFromDamage && moveLeft && !moveRight) {
       this.player.setFlipX(true);
-    } else if (moveRight && !moveLeft) {
+    } else if (!isRecoveringFromDamage && moveRight && !moveLeft) {
       this.player.setFlipX(false);
     }
 
-    if (wantsJump && body.blocked.down) {
+    if (!isRecoveringFromDamage && wantsJump && body.blocked.down) {
       body.setVelocityY(PLAYER_JUMP_VELOCITY);
       this.jumpHoldUntil = this.time.now + PLAYER_JUMP_HOLD_TIME;
       this.sound.play("jump-sfx", { volume: 0.45 });
     }
 
-    if (jumpHeld && this.time.now < this.jumpHoldUntil && body.velocity.y < 0) {
+    if (!isRecoveringFromDamage && jumpHeld && this.time.now < this.jumpHoldUntil && body.velocity.y < 0) {
       body.setVelocityY(body.velocity.y + PLAYER_JUMP_HOLD_FORCE);
-    } else if (!jumpHeld && this.time.now < this.jumpHoldUntil && body.velocity.y < 0) {
+    } else if ((!jumpHeld || isRecoveringFromDamage) && this.time.now < this.jumpHoldUntil && body.velocity.y < 0) {
       body.setVelocityY(Math.max(body.velocity.y * PLAYER_JUMP_RELEASE_DAMPING, -180));
       this.jumpHoldUntil = 0;
     }
 
-    if (fastFall) {
+    if (!isRecoveringFromDamage && fastFall) {
       body.setVelocityY(Math.min(body.velocity.y + 28, 720));
     }
 
-    if (isMoving && body.blocked.down) {
-      this.player.anims.play("chicken-run", true);
-    } else {
-      this.player.anims.stop();
-      this.player.setFrame(1);
-    }
-
     if (this.time.now < this.invulnerableUntil) {
+      this.player.setTexture("chicken-4");
       this.player.setAlpha(Math.floor(this.time.now / 80) % 2 === 0 ? 0.45 : 1);
+    } else if (!body.blocked.down) {
+      this.player.setTexture("chicken-5");
+      this.player.setAlpha(1);
+    } else if (isMoving && body.blocked.down) {
+      const chickenRunFrame = 1 + (Math.floor(this.time.now / 100) % 3);
+      this.player.setTexture(`chicken-${chickenRunFrame}`);
+      this.player.setAlpha(1);
     } else {
+      this.player.setTexture("chicken-0");
       this.player.setAlpha(1);
     }
 
@@ -337,16 +343,16 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createPlayer() {
-    this.player = this.physics.add.sprite(110, 330, "chicken");
-    this.player.setScale(0.42);
-    this.player.setFrame(1);
+    this.player = this.physics.add.sprite(110, 330, "chicken-0");
+    this.player.setOrigin(0.5, 1);
+    this.player.setScale(PLAYER_SCALE);
     this.player.setCollideWorldBounds(false);
     this.player.setBounce(0);
     this.player.setDepth(4);
 
     const body = this.player.body as Phaser.Physics.Arcade.Body;
-    body.setSize(112, 126);
-    body.setOffset(42, 42);
+    body.setSize(146, 168);
+    body.setOffset(116, 146);
   }
 
   private resetPlayerForLevelStart(isInitialLoad: boolean) {
@@ -362,7 +368,7 @@ export class PlayScene extends Phaser.Scene {
     this.player.setFlipX(false);
     this.player.setPosition(startX, startY);
     this.player.setVelocity(0, 0);
-    this.player.setFrame(1);
+    this.player.setTexture("chicken-0");
     body.setVelocity(0, 0);
     this.jumpHoldUntil = 0;
     this.cameras.main.scrollX = 0;
@@ -371,19 +377,6 @@ export class PlayScene extends Phaser.Scene {
     if (!isInitialLoad) {
       this.invulnerableUntil = this.time.now + 1300;
     }
-  }
-
-  private createChickenAnimations() {
-    if (this.anims.exists("chicken-run")) {
-      return;
-    }
-
-    this.anims.create({
-      key: "chicken-run",
-      frames: this.anims.generateFrameNumbers("chicken", { start: 0, end: 2 }),
-      frameRate: 10,
-      repeat: -1
-    });
   }
 
   private createEagleAnimations() {
